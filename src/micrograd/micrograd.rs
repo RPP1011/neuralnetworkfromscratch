@@ -15,6 +15,9 @@ mod micrograd {
                 data: self.data * other.data
             }
         }
+
+        pub fn repr(&self) -> String {
+            return format!("Value({})", self.data);
+        }
     }
-    
 }
