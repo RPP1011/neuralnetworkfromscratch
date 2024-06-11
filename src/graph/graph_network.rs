@@ -1,13 +1,13 @@
 mod graph {
     struct Node {
         pub activation_function: Box<dyn Fn(f64) -> f64>,
-        pub threshold : f64
     }
 
     struct Layer {
         pub layer_size : u16,
         pub nodes : Vec<Node>,
-        pub biases : Vec<f64>
+        pub biases : Vec<f64>,
+        pub weights : Vec<f64>
     }
 
     fn activate(node: &Node, input: Vec<f64>, weights:Vec<f64>, bias: f64) -> f64 {
