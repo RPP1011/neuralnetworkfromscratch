@@ -18,7 +18,7 @@ mod micrograd {
         pub op: Operation,
     }
 
-        pub fn add(this: Rc<RefCell<Value>>, other: Rc<RefCell<Value>>) -> Rc<RefCell<Value>> {
+        pub fn add(mut this: Rc<RefCell<Value>>,mut other: Rc<RefCell<Value>>) -> Rc<RefCell<Value>> {
             let previous: Vec<Rc<RefCell<Value>>> = vec![
                 this.clone(),
                 other.clone(),
@@ -34,12 +34,15 @@ mod micrograd {
             let out_reference = Rc::new(RefCell::new(out));
 
 
+            let out_reference_clone = out_reference.clone();
+            let out_clone = out.clone();
             out.borrow_mut().backwards = Some(Box::new(move || {
-                let out_grad: f64 = out_reference.borrow().grad;
-                let mut this_instance =  this.borrow().borrow_mut();
+                let out_grad: f64 = out_reference_clone.borrow().grad;
+                let mut binding = this.borrow_mut();
+                let mut this_instance =  binding.borrow_mut();
                
-                this_instance.grad += out_grad;
-                
+                this_instance.get_mut().grad += out_grad;
+                out_clone.borrow_mut().grad += out_grad;
             }));
 
             out_reference
