@@ -1,6 +1,7 @@
 Goals Of This Project
 
 Current Step 1
+Making graph with arena approach
 
 1. Make MLP NN capable of attaining 80% accuract on MNIST 
 2. Make ConvNet capable of image classification
