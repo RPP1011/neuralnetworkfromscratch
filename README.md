@@ -1,4 +1,4 @@
-![Build Status](https://github.com/OWNER/neuralnetworkfromscratch/actions/workflows/rust.yml/badge.svg)
+![Build Status](https://github.com/RPP1011/neuralnetworkfromscratch/actions/workflows/rust.yml/badge.svg)
 
 
 Goals Of This Project
