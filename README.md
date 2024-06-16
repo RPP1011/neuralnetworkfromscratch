@@ -1,3 +1,6 @@
+![Build Status](https://github.com/OWNER/neuralnetworkfromscratch/actions/workflows/rust.yml/badge.svg)
+
+
 Goals Of This Project
 
 Current Step 1
