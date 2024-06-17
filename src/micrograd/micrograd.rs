@@ -1,72 +1,115 @@
 mod micrograd {
     use std::borrow::BorrowMut;
-    use std::cell::RefCell;
-    use std::rc::{Rc, Weak};
+    use std::rc::{Rc};
+    
+    #[derive(Clone)]
     pub enum Operation {
         ADD,
         MUL,
         POW,
     }
-    
 
-    pub struct Value {
-        pub data: f64,
-        pub grad: f64,
+    impl Operation {
+        pub fn forward(&self, a: Rc<Value>, b: Rc<Value>) -> f64 {
+            match self {
+                Operation::ADD => a.clone().data + b.clone().data ,
+                Operation::MUL => a.clone().data * b.clone().data,
+                Operation::POW => a.clone().data.powf(b.clone().data),
+            }
+        }
 
-        pub backwards: Option<Box<dyn Fn()>>,
-        pub previous: Vec<Rc<RefCell<Value>>>,
-        pub op: Operation,
+        pub fn backwards(&self, a: Rc<Value>, b: Rc<Value>, out: Rc<Value>) {
+            match self {
+                Operation::ADD => {
+                    a.clone().borrow_mut().grad += out.clone().grad;
+                    b.clone().borrow_mut().grad += out.clone().grad;
+                },
+                Operation::MUL => {
+                    a.clone().borrow_mut().grad += b.clone().data * out.clone().grad;
+                    b.clone().borrow_mut().grad += a.clone().data * out.clone().grad;
+                },
+                Operation::POW => {
+                    a.clone().borrow_mut().grad += b.clone().data * a.clone().data.powf(b.clone().data - 1.0) * out.clone().grad;
+                    b.clone().borrow_mut().grad += a.clone().data.powf(b.clone().data) * out.clone().grad * (a.clone().data.ln());
+                },
+            }
+        }
     }
 
-        pub fn add(mut this: Rc<RefCell<Value>>,mut other: Rc<RefCell<Value>>) -> Rc<RefCell<Value>> {
-            let previous: Vec<Rc<RefCell<Value>>> = vec![
-                this.clone(),
-                other.clone(),
-            ];
-            let mut out = Value {
-                data: this.borrow().data + other.borrow().data,
+    pub enum CreateValueOption {
+        EMPTY,
+        DATA(Value),
+    }
+   
+    pub struct Graph {
+        pub values: Vec<Rc<Value>>,
+        pub layers: Vec<Layer>
+    }
+
+    impl Graph {
+        pub fn add_value(&mut self, value: CreateValueOption) -> Rc<Value>{
+            let out = Value {
+                data: 0.0,
                 grad: 0.0,
-                backwards: None,
-                previous,
+                index: self.values.len(),
+                previous: vec![],
                 op: Operation::ADD,
             };
 
-            let out_reference = Rc::new(RefCell::new(out));
-
-
-            let out_reference_clone = out_reference.clone();
-            let out_clone = out.clone();
-            out.borrow_mut().backwards = Some(Box::new(move || {
-                let out_grad: f64 = out_reference_clone.borrow().grad;
-                let mut binding = this.borrow_mut();
-                let mut this_instance =  binding.borrow_mut();
-               
-                this_instance.get_mut().grad += out_grad;
-                out_clone.borrow_mut().grad += out_grad;
-            }));
-
-            out_reference
+            match value {
+                CreateValueOption::EMPTY => {
+                    self.values.push(Rc::new(out));
+                },
+                CreateValueOption::DATA(value) => {
+                    self.values.push(Rc::new(out));
+                }          
+            };
+            
+            Rc::new(out)
         }
 
-        // pub fn mul(&self, other: &Value) -> Value {
-        //     unsafe {
-        //         let previous = vec![Weak::from_raw(self), Weak::from_raw(other)];
-        //         let mut out = Value {
-        //             data: self.data * other.data,
-        //             grad: 0.0,
-        //             backwards: None,
-        //             previous,
-        //             op: Operation::MUL,
-        //         };
+        pub fn add_layer(&mut self, n:usize) {
+            for _ in 0..n {
+                self.add_value(CreateValueOption::EMPTY);
+            }
 
-        //         out.backwards = Some(Box::new(move || -> () {
-        //             self.grad *= other.grad * out.grad;
-        //             other.grad *= self.grad * out.grad;
-        //         }));
+            let layer = Layer {
+                values: vec![],
+                weights: vec![],
+                biases: vec![],
+            };
 
-        //         return out;
-        //     }
-        // }
+            self.layers.push(layer);
+        }
+    }
 
-    
+    pub struct Layer {
+        pub values: Vec<usize>,
+        pub weights: Vec<f64>,
+        pub biases: Vec<f64>,
+    }
+
+    #[derive(Clone)]
+    pub struct Value {
+        pub data: f64,
+        pub grad: f64,
+        pub index: usize,
+        pub previous: Vec<usize>,
+        pub op: Operation,
+    }
+
+    pub fn add(graph: Rc<Graph>, a:Rc<Value>, b:Rc<Value>) -> Rc<Value> {
+        let mut graph_reference = graph.clone();
+
+        let out = Value {
+            data: graph_reference.values[a.index].data + graph_reference.values[b.index].data,
+            grad: 0.0,
+            index: graph_reference.values.len(),
+            previous: vec![a.index, b.index],
+            op: Operation::ADD,
+        };
+
+        graph_reference.borrow_mut().add_value(CreateValueOption::DATA(out.clone()))
+    }
+
 }
