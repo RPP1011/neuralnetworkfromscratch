@@ -1,4 +1,3 @@
-mod graph;
 mod micrograd;
 
 fn main() {
