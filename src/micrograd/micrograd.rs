@@ -7,7 +7,6 @@ mod micrograd {
     pub enum Operation {
         ADD,
         MUL,
-        POW,
     }
 
     impl Operation {
@@ -20,30 +19,31 @@ mod micrograd {
             
             match self {
                 Operation::ADD => a_data + b_data,
-                Operation::MUL => a_data * b_data,
-                Operation::POW => a_data.powf(b_data),
+                Operation::MUL => a_data * b_data
             }
         }
 
-        // pub fn backwards(&self, a: Rc<RefCell<Value>>, b: Rc<RefCell<Value>>, out: Rc<RefCell<Value>>) {
-        //     let mut a = a.borrow().borrow_mut();
-        //     let mut b = b.borrow().borrow_mut();
-        //     let out = out.borrow().borrow();
-        //     match self {
-        //         Operation::ADD => {
-        //             a.grad += out.clone().grad;
-        //             b.grad += out.clone().grad;
-        //         },
-        //         Operation::MUL => {
-        //             a.clone().borrow_mut().grad += b.clone().data * out.clone().grad;
-        //             b.clone().borrow_mut().grad += a.clone().data * out.clone().grad;
-        //         },
-        //         Operation::POW => {
-        //             a.clone().borrow_mut().grad += b.clone().data * a.clone().data.powf(b.clone().data - 1.0) * out.clone().grad;
-        //             b.clone().borrow_mut().grad += a.clone().data.powf(b.clone().data) * out.clone().grad * (a.clone().data.ln());
-        //         },
-        //     }
-        // }
+        pub fn backwards(&self,mut a: Rc<RefCell<Value>>, mut b: Rc<RefCell<Value>>, out: Rc<RefCell<Value>>) {
+            let a_binding = a.borrow_mut();
+            let b_binding = b.borrow_mut();
+            let mut a_mut_reference = a_binding.as_ref().borrow_mut();
+            let mut b_mut_reference = b_binding.as_ref().borrow_mut();
+            
+            let out_ref : &RefCell<Value> = out.borrow();
+            let out_grad : f64 = out_ref.borrow().grad;
+
+
+            match self {
+                Operation::ADD => {
+                    a_mut_reference.grad += out_grad;
+                    b_mut_reference.grad += out_grad;
+                },
+                Operation::MUL => {
+                    a_mut_reference.grad += b_mut_reference.data * out_grad;
+                    b_mut_reference.grad += a_mut_reference.data * out_grad;
+                }
+            }
+        }
     }
 
     pub enum CreateValueOption {
