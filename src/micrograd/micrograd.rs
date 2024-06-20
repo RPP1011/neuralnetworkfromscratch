@@ -58,24 +58,25 @@ mod micrograd {
 
     impl Graph {
         pub fn add_value(&mut self, value: CreateValueOption) -> Rc<RefCell<Value>>{
-            let out = Rc::new(RefCell::new(Value {
-                data: 0.0,
-                grad: 0.0,
-                index: self.values.len(),
-                previous: vec![],
-                op: Operation::ADD,
-            }));
-
             match value {
                 CreateValueOption::EMPTY => {
+                    let out = Rc::new(RefCell::new(Value {
+                        data: 0.0,
+                        grad: 0.0,
+                        index: self.values.len(),
+                        previous: vec![],
+                        op: Operation::ADD,
+                    }));
+
                     self.values.push(out.clone());
+                    out
                 },
-                CreateValueOption::DATA(value) => {
-                    self.values.push(Rc::new(RefCell::new(value)));
+                CreateValueOption::DATA(node) => {
+                    let out = Rc::new(RefCell::new(node.clone()));
+                    self.values.push(out.clone());
+                    out
                 }          
-            };
-            
-            out.clone()
+            }
         }
 
         pub fn add_layer(&mut self, n:usize) {
@@ -110,7 +111,10 @@ mod micrograd {
 
     pub fn add(graph: Rc<RefCell<Graph>>, a:Rc<RefCell<Value>>, b:Rc<RefCell<Value>>) -> Rc<RefCell<Value>> {
         
-        let values: &Vec<Rc<RefCell<Value>>> = &graph.as_ref().borrow().values;
+        let values: usize = graph.as_ref().borrow().values.len();
+
+        
+
         let a_index = a.as_ref().borrow().index;
         let b_index = b.as_ref().borrow().index;
 
@@ -120,20 +124,20 @@ mod micrograd {
         let out = Value {
             data: a_data + b_data,
             grad: 0.0,
-            index: values.len(),
+            index: values,
             previous: vec![a_index, b_index],
             op: Operation::ADD,
         };
 
         let graph_reference: Rc<RefCell<Graph>> = graph.clone();
-
-        let mut mut_graph_reference = graph_reference.as_ref().borrow_mut();
+        let ref_graph = graph_reference.as_ref();
+        let mut mut_graph_reference = ref_graph.borrow_mut();
         mut_graph_reference.add_value(CreateValueOption::DATA(out.clone()))
     }
 
     pub fn mul(graph: Rc<RefCell<Graph>>, a:Rc<RefCell<Value>>, b:Rc<RefCell<Value>>) -> Rc<RefCell<Value>> {
         
-        let values: &Vec<Rc<RefCell<Value>>> = &graph.as_ref().borrow().values;
+        let values: usize = graph.as_ref().borrow().values.len();
         let a_index = a.as_ref().borrow().index;
         let b_index = b.as_ref().borrow().index;
 
@@ -143,7 +147,7 @@ mod micrograd {
         let out = Value {
             data: a_data * b_data,
             grad: 0.0,
-            index: values.len(),
+            index: values,
             previous: vec![a_index, b_index],
             op: Operation::MUL,
         };
