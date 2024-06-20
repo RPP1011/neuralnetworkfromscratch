@@ -154,3 +154,71 @@ mod micrograd {
         mut_graph_reference.add_value(CreateValueOption::DATA(out.clone()))
     }
 }
+
+
+// Add Tests
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use crate::micrograd::micrograd::micrograd::{add, mul, CreateValueOption, Graph, Operation, Value};
+
+    #[test]
+    fn test_add() {
+        let mut graph = Graph {
+            values: vec![],
+            layers: vec![],
+        };
+
+        let a = graph.add_value(CreateValueOption::DATA(Value {
+            data: 2.0,
+            grad: 0.0,
+            index: 0,
+            previous: vec![],
+            op: Operation::ADD,
+        }));
+
+        let b = graph.add_value(CreateValueOption::DATA(Value {
+            data: 3.0,
+            grad: 0.0,
+            index: 1,
+            previous: vec![],
+            op: Operation::ADD,
+        }));
+
+        let out = add(Rc::new(RefCell::new(graph)), a, b);
+
+        let out_data = out.as_ref().borrow().data;
+        assert_eq!(out_data, 5.0);
+    }
+
+    #[test]
+    fn test_mul() {
+        let mut graph = Graph {
+            values: vec![],
+            layers: vec![],
+        };
+
+        let a = graph.add_value(CreateValueOption::DATA(Value {
+            data: 2.0,
+            grad: 0.0,
+            index: 0,
+            previous: vec![],
+            op: Operation::ADD,
+        }));
+
+        let b = graph.add_value(CreateValueOption::DATA(Value {
+            data: 3.0,
+            grad: 0.0,
+            index: 1,
+            previous: vec![],
+            op: Operation::ADD,
+        }));
+
+        let out = mul(Rc::new(RefCell::new(graph)), a, b);
+
+        let out_data = out.as_ref().borrow().data;
+        assert_eq!(out_data, 6.0);
+    }
+}
