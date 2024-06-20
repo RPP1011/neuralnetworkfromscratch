@@ -130,4 +130,27 @@ mod micrograd {
         let mut mut_graph_reference = graph_reference.as_ref().borrow_mut();
         mut_graph_reference.add_value(CreateValueOption::DATA(out.clone()))
     }
+
+    pub fn mul(graph: Rc<RefCell<Graph>>, a:Rc<RefCell<Value>>, b:Rc<RefCell<Value>>) -> Rc<RefCell<Value>> {
+        
+        let values: &Vec<Rc<RefCell<Value>>> = &graph.as_ref().borrow().values;
+        let a_index = a.as_ref().borrow().index;
+        let b_index = b.as_ref().borrow().index;
+
+        let a_data = a.as_ref().borrow().data;
+        let b_data = b.as_ref().borrow().data;
+
+        let out = Value {
+            data: a_data * b_data,
+            grad: 0.0,
+            index: values.len(),
+            previous: vec![a_index, b_index],
+            op: Operation::MUL,
+        };
+
+        let graph_reference: Rc<RefCell<Graph>> = graph.clone();
+
+        let mut mut_graph_reference = graph_reference.as_ref().borrow_mut();
+        mut_graph_reference.add_value(CreateValueOption::DATA(out.clone()))
+    }
 }
