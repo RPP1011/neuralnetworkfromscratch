@@ -1,5 +1,5 @@
 [package]
-name = "neural_network_from_scrath"
+name = "neural_network_from_scratch"
 version = "0.1.0"
 edition = "2021"
 
