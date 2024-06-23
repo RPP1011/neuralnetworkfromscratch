@@ -1,10 +1,9 @@
 mod layers {
-    use std::rc::Rc;
     use crate::layers::layers::layers::Layer;
+    use crate::nuerons::nuerons::Nueron;
 
     pub struct DenseLayer {
-        pub previous_layer: Rc<dyn Layer>,
-        // pub neurons: Vec<Neuron>
+        pub neurons: Vec<Nueron>
     }
 
     impl Layer for DenseLayer{
