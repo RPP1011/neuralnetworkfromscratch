@@ -2,7 +2,7 @@ use super::layers::layers::Layer;
 
 
 pub struct Dropout {
-    pub rate: f32,
+    pub rate: f64,
     pub training: bool,
 }
 
@@ -13,5 +13,14 @@ impl Layer for Dropout {
 
     fn backward(&self) {
         todo!("Implement dropout backward pass")
+    }
+}
+
+impl Dropout {
+    pub fn new(rate: f64, training: bool) -> Dropout {
+        Dropout {
+            rate,
+            training
+        }
     }
 }
