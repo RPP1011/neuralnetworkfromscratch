@@ -18,6 +18,5 @@ fn main() {
             Rc::new(Dense::new(10, ReLU)),
         ]
     };
-
     
 }
