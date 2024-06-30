@@ -165,6 +165,7 @@ name = "neural_network_from_scratch"
 version = "0.1.0"
 dependencies = [
  "graphviz-rust",
+ "rand",
 ]
 
 [[package]]

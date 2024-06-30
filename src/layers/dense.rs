@@ -18,9 +18,12 @@ impl Layer for Dense {
 
 impl Dense {
     pub fn new(n:usize, activation_function: ActivationFunction) -> Dense {
-
+        let mut neurons = Vec::new();
+        for _ in 0..n {
+            neurons.push(Nueron::new(1,activation_function));
+        }
         Dense {
-            neurons: vec![Nueron::new(activation_function); n]
+            neurons: neurons
         }
     }
 }
