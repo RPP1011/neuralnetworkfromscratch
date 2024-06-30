@@ -8,6 +8,7 @@ pub mod layers;
 pub mod nuerons;
 pub mod math;
 pub mod graph;
+pub mod file;
 
 fn main() {
     let network = Sequential {

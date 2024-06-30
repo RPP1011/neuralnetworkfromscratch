@@ -9,25 +9,33 @@ pub struct Sequential {
     pub layers: std::vec::Vec<Rc<dyn Layer>>
 }
 
-impl Sequential {
-    pub fn compile(&self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
+impl Model for Sequential {
+    fn compile(&self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
         todo!()
     }
 
-    pub fn fit(&self, data:Vec<f64>, labels:Vec<f64>, epochs: usize) {
+    fn fit(&self, data:Vec<f64>, labels:Vec<f64>, epochs: usize) {
         todo!()
     }
 
-    pub fn predict(&self, data:Vec<f64>) -> f64 {
+    fn predict(&self, data:Vec<f64>) -> f64 {
         todo!()
     }
 
-    pub fn evaluate(&self, data:Vec<f64>, labels:Vec<f64>) -> (f64, f64) {
+    fn evaluate(&self, data:Vec<f64>, labels:Vec<f64>) -> (f64, f64) {
         todo!()
     }
 
-    pub fn save(&self) {
+    fn save(&self) {
         todo!()
     }
+}
+
+pub trait Model {
+    fn compile(&self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>);
+    fn fit(&self, data:Vec<f64>, labels:Vec<f64>, epochs: usize);
+    fn predict(&self, data:Vec<f64>) -> f64;
+    fn evaluate(&self, data:Vec<f64>, labels:Vec<f64>) -> (f64, f64);
+    fn save(&self);
 }
 
