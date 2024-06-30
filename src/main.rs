@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use graph::graph::Sequential;
+use graph::{graph::Sequential, loss_function::LossFunction, network_metric::Metric, optimizer::Optimizer};
 use layers::{dense::Dense, dropout::Dropout, flatten::Flatten};
 use nuerons::activation_function::ActivationFunction::ReLU;
 
@@ -18,5 +18,9 @@ fn main() {
             Rc::new(Dense::new(10, ReLU)),
         ]
     };
-    
+
+    network.compile(Optimizer::SGD, LossFunction::MeanSquaredError, vec![Metric::Accuracy]);
+
+
+
 }

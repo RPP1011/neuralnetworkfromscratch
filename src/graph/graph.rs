@@ -10,23 +10,23 @@ pub struct Sequential {
 }
 
 impl Sequential {
-    pub fn compile(optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
+    pub fn compile(&self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
         todo!()
     }
 
-    pub fn fit(data:Vec<f64>, labels:Vec<f64>, epochs: usize) {
+    pub fn fit(&self, data:Vec<f64>, labels:Vec<f64>, epochs: usize) {
         todo!()
     }
 
-    pub fn predict(data:Vec<f64>) -> f64 {
+    pub fn predict(&self, data:Vec<f64>) -> f64 {
         todo!()
     }
 
-    pub fn evaluate(data:Vec<f64>, labels:Vec<f64>) -> (f64, f64) {
+    pub fn evaluate(&self, data:Vec<f64>, labels:Vec<f64>) -> (f64, f64) {
         todo!()
     }
 
-    pub fn save() {
+    pub fn save(&self) {
         todo!()
     }
 }
