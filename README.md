@@ -13,3 +13,6 @@ Current Step 1: Making graph with arena approach
 7. Make Transformer
 8. Make Vision Transformers
 9. GAN network.
+
+## Concerns.
+1. The current tensor design is not well suited for neural networks. Memory is being allocated far too frequently

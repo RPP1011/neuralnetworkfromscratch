@@ -30,12 +30,12 @@ fn main() {
     // network.fit(training_data, training_labels, epochs)
 
 
-    let x = Tensor::new(vec![1], vec![1.0]);
-    let y = Tensor::new(vec![1], vec![1.0]);
-    let z = x + y;
-    let output = z.clone();
-    Tensor::backwards(output);
-    println!("{:?}", z);
+    // let x = Tensor::new(vec![1], vec![1.0]);
+    // let y = Tensor::new(vec![1], vec![1.0]);
+    // let z = x + y;
+    // let output = z.clone();
+    // Tensor::backwards(output);
+    // println!("{:?}", z);
 
     // visualize_tensor_graph(&z);
 }
