@@ -1,4 +1,4 @@
-use crate::math::tensor::Tensor;
+use crate::math::{tensor::Tensor, tensor_context::TensorRef};
 
 use super::layers::layers::Layer;
 
@@ -7,11 +7,11 @@ pub struct Flatten {
 }
 
 impl Layer for Flatten {
-    fn forward(&self, input: Tensor) -> Tensor {
+    fn forward(&self, input: TensorRef) -> TensorRef {
         todo!()
     }
 
-    fn backward(&self, input: Tensor) -> Tensor {
+    fn backward(&self, input: TensorRef) -> TensorRef {
         todo!()
     }
 }

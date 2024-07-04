@@ -1,25 +1,30 @@
-use std::{borrow::{Borrow, BorrowMut}, rc::Rc};
+use std::{borrow::{Borrow, BorrowMut}, cell::RefCell, rc::Rc};
 
 // use file::idx_reader;
-// use graph::{graph::{Model, Sequential}, loss_function::LossFunction, network_metric::Metric, optimizer::Optimizer};
-// use layers::{dense::Dense, dropout::Dropout, flatten::Flatten};
-use math::tensor::Tensor;
-// use nuerons::activation_function::ActivationFunction::ReLU;
+use graph::{graph::{Model, Sequential}, loss_function::LossFunction, network_metric::Metric, optimizer::Optimizer};
+use layers::{dense::Dense, dropout::Dropout, flatten::Flatten};
+use math::{tensor::Tensor, tensor_context};
+use nuerons::activation_function::ActivationFunction;
 
-// pub mod layers;
+pub mod layers;
 pub mod math;
-// pub mod graph;
-// pub mod file;
+pub mod graph;
+pub mod file;
+pub mod nuerons;
 
 fn main() {
-    // let network = Sequential {
-    //     layers: vec![
-    //         Rc::new(Flatten::new(vec![28,28])),
-    //         Rc::new(Dense::new(128, ReLU)),
-    //         Rc::new(Dropout::new(0.2, false)),
-    //         Rc::new(Dense::new(10, ReLU)),
-    //     ]
-    // };
+    let tensor_context = tensor_context::TensorContext::new(1024);
+    let tensor_context_ref = Rc::new(RefCell::new(tensor_context)); 
+    tensor_context_ref.as_ref().borrow_mut().set_self_reference(tensor_context_ref.clone());
+    let network = Sequential {
+        context: tensor_context_ref.clone(),
+        layers:vec![
+            Rc::new(Flatten::new(vec![28,28])),
+            Rc::new(Dense::new(tensor_context_ref.clone(), 128, ActivationFunction::ReLU)),
+            Rc::new(Dropout::new(0.2, false)),
+            Rc::new(Dense::new(tensor_context_ref.clone() ,10, ActivationFunction::ReLU)),
+        ]
+    };
 
     // let training_data = idx_reader::read_file("data/train-images-idx3-ubyte/train-images.idx3-ubyte").unwrap();
     // let training_labels = idx_reader::read_file("data/train-labels-idx1-ubyte/train-labels.idx1-ubyte").unwrap();

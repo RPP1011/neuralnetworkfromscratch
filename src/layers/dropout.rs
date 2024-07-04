@@ -1,4 +1,4 @@
-use crate::math::tensor::Tensor;
+use crate::math::{tensor::Tensor, tensor_context::TensorRef};
 
 use super::layers::layers::Layer;
 
@@ -9,11 +9,11 @@ pub struct Dropout {
 }
 
 impl Layer for Dropout {
-    fn forward(&self, input: Tensor) -> Tensor {
+    fn forward(&self, input: TensorRef) -> TensorRef {
         todo!("Implement dropout Forward pass")
     }
 
-    fn backward(&self, input: Tensor) -> Tensor {
+    fn backward(&self, input: TensorRef) -> TensorRef {
         todo!("Implement dropout backward pass")
     }
 }

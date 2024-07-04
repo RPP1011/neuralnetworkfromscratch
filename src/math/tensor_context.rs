@@ -8,12 +8,38 @@ pub type TensorRef = usize;
 #[derive(Debug)]
 pub struct TensorContext {
     tensors : Vec<Tensor>,
-    self_reference: Rc<RefCell<TensorContext>>,
-    capacity : usize
+    self_reference: Option<Rc<RefCell<TensorContext>>>
 }
 
 impl TensorContext {
-    pub fn get_tensor(self, tensor_ref : TensorRef) -> Tensor {
+    pub fn new(capacity: usize) -> TensorContext {
+        let context = TensorContext {
+            tensors: Vec::with_capacity(capacity),
+            self_reference: None
+        };
+        context
+    }
+
+    pub fn set_self_reference(&mut self, self_reference: Rc<RefCell<TensorContext>>) {
+        self.self_reference = Some(self_reference);
+    }
+
+    pub fn new_tensor(&mut self, shape: Vec<usize>, data: Vec<f64>) -> TensorRef {
+        let grad: Option<Vec<f64>> = None;
+        let operation: Option<Operation> = None;
+        let tensor = Tensor {
+            shape,
+            tensor_context: self.self_reference.as_mut().unwrap().clone(),
+            tensor_ref: self.tensors.len(),
+            data,
+            grad,
+            operation,
+        };
+        self.tensors.push(tensor);
+        self.tensors.len() - 1
+    }
+
+    pub fn get_tensor(&self, tensor_ref : TensorRef) -> Tensor {
         self.tensors[tensor_ref].clone()
     }
 
@@ -25,7 +51,8 @@ impl TensorContext {
         let grad: Option<Vec<f64>> = None;
         let operation = Some(Operation::Add(tensor_ref1, tensor_ref2));
         let tensor = Tensor {
-            tensor_context: self.self_reference.clone(),
+            shape: tensor1.shape.clone(),
+            tensor_context: self.self_reference.as_mut().unwrap().clone(),
             tensor_ref: tensors.len(),
             data,
             grad,
@@ -43,7 +70,8 @@ impl TensorContext {
         let grad: Option<Vec<f64>> = None;
         let operation = Some(Operation::Mul(tensor_ref1, tensor_ref2));
         let tensor = Tensor {
-            tensor_context: self.self_reference.clone(),
+            shape: tensor1.shape.clone(),
+            tensor_context: self.self_reference.as_mut().unwrap().clone(),
             tensor_ref: tensors.len(),
             data,
             grad,
