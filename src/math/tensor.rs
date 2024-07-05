@@ -47,9 +47,11 @@ impl Tensor {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Operation {
-    Add(TensorRef, TensorRef),
+    Add(Vec<TensorRef>),
     Sub,
     Mul(TensorRef, TensorRef),
     Div,

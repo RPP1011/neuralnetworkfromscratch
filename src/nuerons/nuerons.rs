@@ -1,8 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, iter::zip, ops::Mul, rc::Rc};
 
-use crate::{math::{tensor::Tensor, tensor_context::{self, TensorContext, TensorRef}}, nuerons::activation_function::ActivationFunction};
+use crate::{math::tensor_context::{TensorContext, TensorRef}, nuerons::activation_function::ActivationFunction};
 
 use super::activation_function;
+
+
 
 #[derive(Debug, Clone)]
 pub struct Nueron {
@@ -10,6 +12,7 @@ pub struct Nueron {
     pub weights : TensorRef,
     pub bias : TensorRef,
     pub activation_function: ActivationFunction,
+    relevant_tensors : Vec<TensorRef>
 }
 
 impl Nueron {
@@ -21,7 +24,21 @@ impl Nueron {
             weights: random_weights,
             bias: random_bias,
             activation_function,
+            relevant_tensors: vec![random_weights, random_bias]
         }
+    }
+
+    pub fn initialize(&mut self, input_tensor: TensorRef) {
+        // Generate perceptron output tensor
+        let context = &mut self.tensor_context.borrow_mut();
+
+        let dot_product_tensor = context.dot_product(input_tensor, self.weights);
+        let sum_tensor = context.add(dot_product_tensor, self.bias);
+
+        let activation_function_tensor = context.apply(self.activation_function, sum_tensor);
+        self.relevant_tensors.push(dot_product_tensor);
+        self.relevant_tensors.push(sum_tensor);
+        self.relevant_tensors.push(activation_function_tensor);
     }
 
     pub fn feed_forward(&self, inputs: TensorRef) -> TensorRef {

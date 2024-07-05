@@ -1,6 +1,8 @@
 use core::str;
 use std::{cell::RefCell, rc::Rc, vec};
 
+use crate::nuerons::activation_function;
+
 use super::tensor::{self, Operation, Tensor};
 
 pub type TensorRef = usize;
@@ -49,7 +51,7 @@ impl TensorContext {
         let tensor2 = &tensors[tensor_ref2];
         let data = tensor1.data.iter().zip(tensor2.data.iter()).map(|(a, b)| a + b).collect();
         let grad: Option<Vec<f64>> = None;
-        let operation = Some(Operation::Add(tensor_ref1, tensor_ref2));
+        let operation = Some(Operation::Add(vec![tensor_ref1, tensor_ref2]));
         let tensor = Tensor {
             shape: tensor1.shape.clone(),
             tensor_context: self.self_reference.as_mut().unwrap().clone(),
@@ -61,6 +63,11 @@ impl TensorContext {
         tensors.push(tensor);
         tensors.len() - 1
     }
+
+    pub fn dot_product(&mut self, tensor_ref1 : TensorRef, tensor_ref2 : TensorRef) -> TensorRef {
+        1
+    }
+
 
     pub fn mul(&mut self, tensor_ref1 : TensorRef, tensor_ref2 : TensorRef) -> TensorRef {
         let tensors = &mut self.tensors;
@@ -90,23 +97,32 @@ impl TensorContext {
             output_grad = tensor.grad.clone().unwrap_or(vec![0.0; tensor_size]);
         }
 
-        let operation = &self.tensors[tensor_ref].operation.unwrap();
+        let mut operation = None;
+        {
+            let tensor = &self.tensors[tensor_ref];
+            operation = tensor.operation.clone();
+        }
+
         match operation {
-            Operation::Add(tensor_ref1, tensor_ref2) => {
-                {
-                    let tensor1 = &self.tensors[*tensor_ref1];
-                    let tensor1_grad = tensor1.grad.as_ref().unwrap();
-                    let tensor1_grad = tensor1_grad.iter().zip(output_grad.iter()).map(|(a, b)| a + b).collect();
-                    self.tensors[*tensor_ref1].grad = Some(tensor1_grad);
-                }
-                {
-                    let tensor2 = &self.tensors[*tensor_ref2];
-                    let tensor2_grad = tensor2.grad.as_ref().unwrap();
-                    let tensor2_grad = tensor2_grad.iter().zip(output_grad.iter()).map(|(a, b)| a + b).collect();
-                    self.tensors[*tensor_ref2].grad = Some(tensor2_grad);
+            Some(Operation::Add(predecessors)) => {
+                for predecessor in predecessors.iter() {
+                    let predecessor_grad = self.tensors[*predecessor].grad.as_ref().unwrap();
+                    let predecessor_grad = predecessor_grad.iter().zip(output_grad.iter()).map(|(a, b)| a + b).collect();
+                    self.tensors[*predecessor].grad = Some(predecessor_grad);
                 }
             }
             _ => {}
         }
+    }
+
+    pub fn apply(&mut self, activation_function: activation_function::ActivationFunction, tensor_ref : TensorRef) -> TensorRef {
+        match activation_function {
+            activation_function::ActivationFunction::Sigmoid => todo!(),
+            activation_function::ActivationFunction::ReLU => todo!(),
+            activation_function::ActivationFunction::Tanh => todo!(),
+            activation_function::ActivationFunction::Softmax => todo!(),
+            activation_function::ActivationFunction::LeakyReLU => todo!(),
+        };
+        0
     }
 }
