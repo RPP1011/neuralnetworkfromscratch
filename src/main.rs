@@ -13,16 +13,14 @@ pub mod file;
 pub mod nuerons;
 
 fn main() {
-    let tensor_context = tensor_context::TensorContext::new(1024);
-    let tensor_context_ref = Rc::new(RefCell::new(tensor_context)); 
-    tensor_context_ref.as_ref().borrow_mut().set_self_reference(tensor_context_ref.clone());
+    let tensor_context = create_tensor_context!(1024);
     let network = Sequential {
-        context: tensor_context_ref.clone(),
+        context: tensor_context.clone(),
         layers:vec![
             Rc::new(Flatten::new(vec![28,28])),
-            Rc::new(Dense::new(tensor_context_ref.clone(), 128, ActivationFunction::ReLU)),
+            Rc::new(Dense::new(tensor_context.clone(), 128, ActivationFunction::ReLU)),
             Rc::new(Dropout::new(0.2, false)),
-            Rc::new(Dense::new(tensor_context_ref.clone() ,10, ActivationFunction::ReLU)),
+            Rc::new(Dense::new(tensor_context.clone(), 10, ActivationFunction::ReLU)),
         ]
     };
 

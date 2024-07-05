@@ -18,6 +18,8 @@ pub struct Tensor {
     pub operation: Option<Operation>,
 }
 
+
+
 impl Tensor {   
     // Returns a new tensor owned by its own context
     pub fn new(sizes: Vec<usize>, data : Vec<f64>) -> Tensor {
@@ -63,4 +65,5 @@ pub enum Operation {
     Transpose,
     Reshape,
     Slice,
+    ReLU(TensorRef)
 }
