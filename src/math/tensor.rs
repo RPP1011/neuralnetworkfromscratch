@@ -50,13 +50,14 @@ impl Tensor {
 
 
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Operation {
     Add(Vec<TensorRef>),
-    Sub,
+    Sub(TensorRef, TensorRef),
     Mul(TensorRef, TensorRef),
     Div,
     Exp,
+    Pow(TensorRef, f64),
     Log,
     Sum(TensorRef),
     Mean,

@@ -1,4 +1,6 @@
-use crate::math::tensor::Tensor;
+use std::{cell::RefCell, rc::Rc};
+
+use crate::math::{tensor::Tensor, tensor_context::{self, TensorContext, TensorRef}};
 
 pub enum LossFunction {
     MeanSquaredError,
@@ -7,30 +9,27 @@ pub enum LossFunction {
 }
 
 impl LossFunction {
-    pub fn loss(&self, input : Vec<Tensor>, desired: Vec<Tensor>) -> Tensor {
+    pub fn loss(&self,tensor_context: Rc<RefCell<TensorContext>>,  input : TensorRef, desired: TensorRef) -> TensorRef {
         match self {
-            LossFunction::MeanSquaredError => LossFunction::mean_squared_error(input, desired),
-            LossFunction::CrossEntropy => LossFunction::cross_entropy(input, desired),
-            LossFunction::SparseCrossEntropy => LossFunction::sparse_cross_entropy(input, desired),
+            LossFunction::MeanSquaredError => LossFunction::mean_squared_error(tensor_context, input, desired),
+            LossFunction::CrossEntropy => LossFunction::cross_entropy(tensor_context, input, desired),
+            LossFunction::SparseCrossEntropy => LossFunction::sparse_cross_entropy(tensor_context, input, desired),
         }
     }
 
-    fn mean_squared_error(input : Vec<Tensor>, desired: Vec<Tensor>) -> Tensor {
-        let loss = input.iter().zip(desired.iter()).map(|(input, desired)| {
-            let mut sum = 0.0;
-            for i in 0..input.data.len() {
-                sum += (input.data[i] - desired.data[i]).powi(2);
-            }
-            sum
-        }).sum();
-        Tensor::new(vec![1], vec![loss])
+    fn mean_squared_error(tensor_context: Rc<RefCell<TensorContext>>, input : TensorRef, desired: TensorRef) -> TensorRef {
+        let loss_tensor = tensor_context.borrow_mut().sub(input, desired);
+        let loss_tensor = tensor_context.borrow_mut().pow(loss_tensor, 2.0);
+        let loss = tensor_context.borrow_mut().sum(loss_tensor);
+
+        loss
     }
 
-    fn cross_entropy(_input : Vec<Tensor>, _desired: Vec<Tensor>) -> Tensor {
+    fn cross_entropy(tensor_context: Rc<RefCell<TensorContext>>,_input : TensorRef, _desired: TensorRef) -> TensorRef {
         todo!("Implement Cross Entropy Loss Function")
     }
 
-    fn sparse_cross_entropy(_input : Vec<Tensor>, _desired: Vec<Tensor>) -> Tensor {
+    fn sparse_cross_entropy(tensor_context: Rc<RefCell<TensorContext>>,_input : TensorRef, _desired: TensorRef) -> TensorRef {
         todo!("Implement Sparse Cross Entropy Loss Function")
     }
 }

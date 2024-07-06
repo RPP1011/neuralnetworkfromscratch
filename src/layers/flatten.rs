@@ -20,6 +20,10 @@ impl Layer for Flatten {
         self.output_tensor = Some(self.tensor_context.borrow_mut().concat(vec![input]));
         self.output_tensor.unwrap() 
     }
+
+    fn get_parameters(&self) -> Vec<TensorRef> {
+        vec![]
+    }
 }
 
 impl Flatten {

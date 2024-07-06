@@ -36,14 +36,13 @@ impl Nueron {
 
     pub fn initialize(&mut self, input_tensor: TensorRef) -> TensorRef {
         let dot_product_tensor = self.tensor_context.borrow_mut().dot_product(input_tensor, self.weights.unwrap());
-        // let sum_tensor = self.tensor_context.borrow_mut().add(dot_product_tensor, self.bias.unwrap());
-        // let activation_function_tensor = self.tensor_context.borrow_mut().apply(self.activation_function, sum_tensor);
+        let sum_tensor = self.tensor_context.borrow_mut().add(dot_product_tensor, self.bias.unwrap());
+        let activation_function_tensor = self.tensor_context.borrow_mut().apply(self.activation_function, sum_tensor);
         
-        // self.dot_product = Some(dot_product_tensor);
-        // self.activation_input = Some(sum_tensor);
-        // self.activation_output = Some(activation_function_tensor);
-        // activation_function_tensor
-        dot_product_tensor
+        self.dot_product = Some(dot_product_tensor);
+        self.activation_input = Some(sum_tensor);
+        self.activation_output = Some(activation_function_tensor);
+        activation_function_tensor
     }
 
     pub fn feed_forward(&self, input_tensor: TensorRef) -> TensorRef {
@@ -54,6 +53,10 @@ impl Nueron {
         tensor_context.add_inplace(self.dot_product.unwrap(), bias, self.activation_input.unwrap());
         tensor_context.apply_inplace(self.activation_function, self.activation_input.unwrap(), self.activation_output.unwrap());
         self.activation_output.unwrap()
+    }
+
+    pub fn get_parameters(&self) -> Vec<TensorRef> {
+        vec![self.weights.unwrap(), self.bias.unwrap()]
     }
 }
 

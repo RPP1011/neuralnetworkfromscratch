@@ -64,6 +64,10 @@ impl Layer for Dropout {
         );
         self.output_tensor.unwrap()
     }
+
+    fn get_parameters(&self) -> Vec<TensorRef> {
+        vec![]
+    }
 }
 
 impl Dropout {
