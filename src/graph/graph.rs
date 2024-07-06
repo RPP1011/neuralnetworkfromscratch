@@ -6,15 +6,30 @@ use super::{loss_function::LossFunction, network_metric::Metric, optimizer::Opti
 
 
 pub struct Sequential {
-    pub layers: std::vec::Vec<Rc<dyn Layer>>,
-    pub context: Rc<RefCell<TensorContext>>
+    pub layers: std::vec::Vec<Box<dyn Layer>>,
+    pub context: Rc<RefCell<TensorContext>>,
+    output_value: Option<TensorRef>
 }
 
+impl Sequential {
+    pub fn new(context: Rc<RefCell<TensorContext>>, layers: Vec<Box<dyn Layer>>) -> Sequential {
+        Sequential {
+            layers,
+            context,
+            output_value: None
+        }
+    }
+}
 
 impl Model for Sequential {
     // For now this just fixes the layer weights so the model can be used for testing
-    fn compile(&self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
-        
+    fn compile(&mut self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
+        // Iterate thropugh all layers and compile them
+        let mut last_layer = None;
+        for layer in self.layers.iter_mut() {
+            last_layer = Some(layer.compile(last_layer.unwrap()));
+        }
+        self.output_value = last_layer; 
     }
 
     fn fit(&mut self, data_tensor:TensorRef, labels:TensorRef, epochs: usize) {
@@ -41,9 +56,8 @@ impl Model for Sequential {
 
                 let final_output = previous_layer_output;
 
-                for layer in self.layers.iter().rev() {
-                    layer.backward(final_output);
-                }
+                // Backpropagate
+                self.context.borrow_mut().backwards(final_output);
             }
         }
     }
@@ -62,7 +76,7 @@ impl Model for Sequential {
 }
 
 pub trait Model {
-    fn compile(&self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>);
+    fn compile(&mut self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>);
     fn fit(&mut self, data:TensorRef, labels:TensorRef, epochs: usize);
     fn predict(&self, data:Vec<f64>) -> f64;
     fn evaluate(&self, data:Vec<f64>, labels:Vec<f64>) -> (f64, f64);

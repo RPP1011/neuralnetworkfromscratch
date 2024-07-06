@@ -34,7 +34,7 @@ impl Nueron {
         }
     }
 
-    pub fn initialize(&mut self, input_tensor: TensorRef) {
+    pub fn initialize(&mut self, input_tensor: TensorRef) -> TensorRef {
         let context = &mut self.tensor_context.borrow_mut();
 
         let dot_product_tensor = context.dot_product(input_tensor, self.weights.unwrap());
@@ -44,6 +44,7 @@ impl Nueron {
         self.dot_product = Some(dot_product_tensor);
         self.activation_input = Some(sum_tensor);
         self.activation_output = Some(activation_function_tensor);
+        activation_function_tensor
     }
 
     pub fn feed_forward(&self, input_tensor: TensorRef) -> TensorRef {

@@ -66,4 +66,5 @@ pub enum Operation {
     Reshape,
     Slice,
     ReLU(TensorRef),
+    Concat(Vec<TensorRef>),
 }

@@ -1,6 +1,8 @@
 use core::str;
 use std::{cell::RefCell, rc::Rc, vec};
 
+use graphviz_rust::attributes::target;
+
 use crate::nuerons::activation_function;
 
 use super::tensor::{self, Operation, Tensor};
@@ -129,6 +131,32 @@ impl TensorContext {
         tensors.len() - 1
     }
 
+    pub fn reset_grads(&mut self, tensor_ref: TensorRef) {
+        let mut operation : Option<Operation> = None;
+        {
+            let tensor = &mut self.tensors[tensor_ref];
+            tensor.grad = None;
+            operation = tensor.operation.clone();
+        }
+        {
+            match operation {
+                Some(Operation::Add(ref predecessors)) => {
+                    predecessors.iter().for_each(|predecessor_ref| {
+                        self.reset_grads(*predecessor_ref);
+                    });
+                }
+                Some(Operation::Sum(sum)) => {
+                    self.reset_grads(sum);
+                }
+                Some(Operation::Mul(left, right)) => {
+                    self.reset_grads(left);
+                    self.reset_grads(right);
+                }
+                _ => {}
+            }
+        }
+    }
+
     pub fn backwards(&mut self, tensor_ref: TensorRef) {
         let tensor = &self.tensors[tensor_ref];
         let tensor_size = tensor.data.len();
@@ -144,19 +172,21 @@ impl TensorContext {
                         let grad = &mut self.tensors[*predecessor_ref].grad;
                         match grad {
                             Some(grad) => {
-                                grad.iter_mut().zip(&output_grad).for_each(|(a, b)| *a = *b)
+                                grad.iter_mut().zip(&output_grad).for_each(|(a, b)| *a += *b)
                             }
                             None => self.tensors[*predecessor_ref].grad = Some(output_grad.clone()),
                         }
                     }
                 }
-                Some(Operation::Sum(target)) => {
+                Some(Operation::Sum(whole_tensor)) => {
                     let output_grad = output_grad[0];
-                    let target_size = self.tensors[target].data.len();
-                    let grad = &mut self.tensors[target].grad;
+                    let target_size = self.tensors[whole_tensor].data.len();
+                    let grad = &mut self.tensors[whole_tensor].grad;
                     match grad {
-                        Some(grad) => grad.iter_mut().for_each(|a| *a = output_grad),
-                        None => self.tensors[target].grad = Some(vec![output_grad; target_size]),
+                        Some(grad) => grad.iter_mut().for_each(|a| *a += output_grad),
+                        None => {
+                            self.tensors[whole_tensor].grad = Some(vec![output_grad; target_size])
+                        }
                     }
                 }
                 Some(Operation::Mul(left, right)) => {
@@ -168,7 +198,7 @@ impl TensorContext {
                             .iter_mut()
                             .zip(&output_grad)
                             .zip(&right_tensor_data)
-                            .for_each(|((a, b), c)| *a = b * c);
+                            .for_each(|((a, b), c)| *a += b * c);
                     } else {
                         self.tensors[left].grad = Some(
                             output_grad
@@ -184,7 +214,7 @@ impl TensorContext {
                             .iter_mut()
                             .zip(&output_grad)
                             .zip(&left_tensor_data)
-                            .for_each(|((a, b), c)| *a = b * c);
+                            .for_each(|((a, b), c)| *a += b * c);
                     } else {
                         self.tensors[right].grad = Some(
                             output_grad
@@ -193,6 +223,23 @@ impl TensorContext {
                                 .map(|(a, b)| a * b)
                                 .collect(),
                         );
+                    }
+                }
+                Some(Operation::ReLU(predecessor)) => {
+                    let grad = &mut self.tensors[predecessor].grad;
+                    match grad {
+                        Some(grad) => grad
+                            .iter_mut()
+                            .zip(output_grad.iter())
+                            .for_each(|(a,b)| *a += if *b > 0.0 { 1.0 } else { 0.0 }),
+                        None => {
+                            self.tensors[predecessor].grad = Some(
+                                output_grad
+                                    .iter()
+                                    .map(|a| if *a > 0.0 { 1.0 } else { 0.0 })
+                                    .collect::<Vec<f64>>(),
+                            )
+                        }
                     }
                 }
                 _ => {}
@@ -316,6 +363,41 @@ impl TensorContext {
             activation_function::ActivationFunction::Softmax => todo!(),
             activation_function::ActivationFunction::LeakyReLU => todo!(),
         };
+    }
+
+    pub fn concat(&mut self, tensor_refs: Vec<TensorRef>) -> TensorRef {
+        let tensors = &mut self.tensors;
+        let mut data = Vec::new();
+        for tensor_ref in tensor_refs.clone() {
+            data.extend(&tensors[tensor_ref].data);
+        }
+        let grad: Option<Vec<f64>> = None;
+        let operation = Some(Operation::Concat(tensor_refs));
+        let tensor = Tensor {
+            shape: vec![data.len()],
+            tensor_context: self.self_reference.as_mut().unwrap().clone(),
+            tensor_ref: tensors.len(),
+            data,
+            grad,
+            operation,
+        };
+        tensors.push(tensor);
+        tensors.len() - 1
+    }
+
+    pub fn concat_inplace(&mut self, tensor_refs: Vec<TensorRef>, output_tensor_ref: TensorRef) {
+        let mut data: Vec<f64> = Vec::new();
+        {
+            let tensors = &self.tensors;
+            tensor_refs.iter().for_each(|tensor_ref| {
+                data.extend(&tensors[*tensor_ref].data);
+            });
+        }
+
+        {   
+            self.tensors[output_tensor_ref].data = data;
+        }
+        
     }
 
     pub fn set_grad(&mut self, tensor_ref: TensorRef, grad: Vec<f64>) {

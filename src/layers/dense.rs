@@ -10,21 +10,27 @@ use crate::nuerons::nuerons::Nueron;
 
 pub struct Dense {
     pub neurons: Vec<Nueron>,
+    tensor_context: Rc<RefCell<TensorContext>>,
+    output_tensor: Option<TensorRef>,
+    input_tensor: Option<TensorRef>,
 }
 
 impl Layer for Dense {
     fn forward(&self, input: TensorRef) -> TensorRef {
-        // 0
-        // let output: Vec<f64> = self.neurons.iter().map(|neuron| neuron.feed_forward(input.clone()).data[0]).collect();
-        // Tensor::new(vec![self.neurons.len()], output)
-        0
+        self.tensor_context.borrow_mut().concat_inplace(
+            self.neurons.iter().map(|neuron| neuron.feed_forward(input)).collect(),
+             self.output_tensor.unwrap());
+
+        self.output_tensor.unwrap().clone()
     }
 
-    fn backward(&self, input: TensorRef) -> TensorRef {
-        1
-        // for neuron in self.neurons.iter() {
-        //     neuron.feed_forward(&vec![1.0]);
-        // }
+
+    fn compile(&mut self, input: TensorRef) -> TensorRef {
+        self.input_tensor = Some(input);
+        self.output_tensor = Some(
+            self.tensor_context.borrow_mut()
+            .concat(self.neurons.iter_mut().map(|neuron| neuron.initialize(input)).collect()));
+        self.output_tensor.unwrap().clone()
     }
 }
 
@@ -35,7 +41,10 @@ impl Dense {
             neurons.push(Nueron::new(tensor_context.clone(),1,activation_function));
         }
         Dense {
-            neurons: neurons
+            neurons,
+            tensor_context,
+            output_tensor: None,
+            input_tensor: None,
         }
     }
 }

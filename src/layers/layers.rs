@@ -6,6 +6,6 @@ pub mod layers {
     
     pub trait Layer {
         fn forward(&self, input: TensorRef) -> TensorRef;
-        fn backward(&self, input: TensorRef) -> TensorRef;  
+        fn compile(&mut self, input: TensorRef) -> TensorRef;
     } 
 }
