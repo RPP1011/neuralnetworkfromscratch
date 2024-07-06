@@ -2,9 +2,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::layers::layers::layers::Layer;
-use crate::math::tensor::Tensor;
-use crate::math::tensor_context::{self, TensorContext, TensorRef};
-use crate::nuerons;
+
+use crate::math::tensor_context::{TensorContext, TensorRef};
+
 use crate::nuerons::activation_function::ActivationFunction;
 use crate::nuerons::nuerons::Nueron;
 
@@ -21,7 +21,7 @@ impl Layer for Dense {
             self.neurons.iter().map(|neuron| neuron.feed_forward(input)).collect(),
              self.output_tensor.unwrap());
 
-        self.output_tensor.unwrap().clone()
+        self.output_tensor.unwrap()
     }
 
 
@@ -30,7 +30,7 @@ impl Layer for Dense {
         self.output_tensor = Some(
             self.tensor_context.borrow_mut()
             .concat(self.neurons.iter_mut().map(|neuron| neuron.initialize(input)).collect()));
-        self.output_tensor.unwrap().clone()
+        self.output_tensor.unwrap()
     }
 }
 

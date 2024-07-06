@@ -1,5 +1,5 @@
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::{BorrowMut},
     cell::RefCell,
     rc::Rc,
 };
@@ -12,8 +12,8 @@ use graph::{
     network_metric::Metric,
     optimizer::Optimizer,
 };
-use layers::{dense::Dense, dropout::Dropout, flatten::Flatten, layers::layers::Layer};
-use math::{tensor::Tensor, tensor_context};
+use layers::{dense::Dense, flatten::Flatten, layers::layers::Layer};
+use math::{tensor_context};
 use nuerons::activation_function::ActivationFunction;
 
 pub mod file;

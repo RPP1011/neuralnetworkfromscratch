@@ -1,10 +1,10 @@
-use std::{cell::RefCell, iter::zip, ops::Mul, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
-use graphviz_rust::attributes::weight;
+
 
 use crate::{math::tensor_context::{TensorContext, TensorRef}, nuerons::activation_function::ActivationFunction};
 
-use super::activation_function;
+
 
 
 
@@ -60,7 +60,7 @@ impl Nueron {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::tensor::Tensor;
+    
 
     #[test]
     fn test_nueron() {
@@ -89,7 +89,7 @@ mod tests {
         
         let output = tensor_context.borrow().get_tensor(output_tensor);
         println!("{:?}", output.data);
-        let output_grad = tensor_context.borrow_mut().new_tensor(vec![1], vec![1.0]);
+        let _output_grad = tensor_context.borrow_mut().new_tensor(vec![1], vec![1.0]);
         
 
         tensor_context.borrow_mut().backwards(output_tensor);

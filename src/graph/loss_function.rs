@@ -26,11 +26,11 @@ impl LossFunction {
         Tensor::new(vec![1], vec![loss])
     }
 
-    fn cross_entropy(input : Vec<Tensor>, desired: Vec<Tensor>) -> Tensor {
+    fn cross_entropy(_input : Vec<Tensor>, _desired: Vec<Tensor>) -> Tensor {
         todo!("Implement Cross Entropy Loss Function")
     }
 
-    fn sparse_cross_entropy(input : Vec<Tensor>, desired: Vec<Tensor>) -> Tensor {
+    fn sparse_cross_entropy(_input : Vec<Tensor>, _desired: Vec<Tensor>) -> Tensor {
         todo!("Implement Sparse Cross Entropy Loss Function")
     }
 }

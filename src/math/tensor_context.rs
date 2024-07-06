@@ -1,11 +1,11 @@
-use core::str;
+
 use std::{cell::RefCell, rc::Rc, vec};
 
-use graphviz_rust::attributes::target;
+
 
 use crate::nuerons::activation_function;
 
-use super::tensor::{self, Operation, Tensor};
+use super::tensor::{Operation, Tensor};
 
 pub type TensorRef = usize;
 
@@ -29,11 +29,11 @@ macro_rules! create_tensor_context {
 
 impl TensorContext {
     pub fn new(capacity: usize) -> TensorContext {
-        let context = TensorContext {
+        
+        TensorContext {
             tensors: Vec::with_capacity(capacity),
             self_reference: None,
-        };
-        context
+        }
     }
 
     pub fn set_self_reference(&mut self, self_reference: Rc<RefCell<TensorContext>>) {

@@ -1,9 +1,8 @@
 use std::{
-    borrow::{Borrow, BorrowMut},
+    borrow::{BorrowMut},
     cell::RefCell,
-    ops::{Add, Div, Mul, Sub},
+    ops::{Add, Mul},
     rc::Rc,
-    sync::Mutex,
 };
 
 use super::tensor_context::{TensorContext, TensorRef};

@@ -3,7 +3,6 @@ use std::{cell::RefCell, rc::Rc, vec};
 use rand::distributions::{Bernoulli, Distribution};
 
 use crate::math::{
-    tensor::Tensor,
     tensor_context::{TensorContext, TensorRef},
 };
 
@@ -47,7 +46,7 @@ impl Layer for Dropout {
             self.mask_tensor.unwrap(),
             self.output_tensor.unwrap(),
         );
-        self.output_tensor.unwrap().clone()
+        self.output_tensor.unwrap()
     }
 
     fn compile(&mut self, input: TensorRef) -> TensorRef {
@@ -56,14 +55,14 @@ impl Layer for Dropout {
         self.mask_tensor = Some(
             self.tensor_context
                 .borrow_mut()
-                .new_tensor(input_shape, vec![0.0; self.layer_shape.clone().unwrap()]),
+                .new_tensor(input_shape, vec![0.0; self.layer_shape.unwrap()]),
         );
         self.output_tensor = Some(
             self.tensor_context
                 .borrow_mut()
                 .mul(input, self.mask_tensor.unwrap()),
         );
-        self.output_tensor.unwrap().clone()
+        self.output_tensor.unwrap()
     }
 }
 

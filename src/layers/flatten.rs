@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::math::{tensor::Tensor, tensor_context::{TensorContext, TensorRef}};
+use crate::math::{tensor_context::{TensorContext, TensorRef}};
 
 use super::layers::layers::Layer;
 
@@ -13,12 +13,12 @@ pub struct Flatten {
 impl Layer for Flatten {
     fn forward(&self, input: TensorRef) -> TensorRef { 
         self.tensor_context.borrow_mut().concat_inplace(vec![input], self.output_tensor.unwrap());
-        self.output_tensor.unwrap().clone()
+        self.output_tensor.unwrap()
     }
 
     fn compile(&mut self, input: TensorRef) -> TensorRef {
         self.output_tensor = Some(self.tensor_context.borrow_mut().concat(vec![input]));
-        self.output_tensor.unwrap().clone() 
+        self.output_tensor.unwrap() 
     }
 }
 

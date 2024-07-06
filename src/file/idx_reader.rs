@@ -1,4 +1,4 @@
-use std::{error::Error, fs::File, io::Read};
+use std::{fs::File, io::Read};
 
 use crate::math::tensor::Tensor;
 
@@ -57,9 +57,9 @@ pub fn read_file(file_path: &str) -> Result<Tensor, &'static str> {
             // Log the data type and dimensions
             println!("Data type: {:?}, Dimensions: {}", data_type, dimensions);
 
-            let dimension_sizes = (0..dimensions).into_iter()
+            let dimension_sizes = (0..dimensions)
             .map(|i| {
-                let start:usize = (4+i*4).into();
+                let start:usize = 4+i*4;
                 let end:usize = start + 4;
                 let slice = &buffer[start..end];
                 u32::from_be_bytes(slice.try_into().unwrap()) as usize})
