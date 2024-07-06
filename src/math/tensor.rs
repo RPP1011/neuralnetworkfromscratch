@@ -59,11 +59,11 @@ pub enum Operation {
     Div,
     Exp,
     Log,
-    Sum,
+    Sum(TensorRef),
     Mean,
     Dot,
     Transpose,
     Reshape,
     Slice,
-    ReLU(TensorRef)
+    ReLU(TensorRef),
 }

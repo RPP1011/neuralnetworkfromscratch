@@ -87,7 +87,7 @@ impl TensorContext {
         let sum = tensor.data.iter().sum();
         let data = vec![sum];
         let grad: Option<Vec<f64>> = None;
-        let operation = Some(Operation::Sum);
+        let operation = Some(Operation::Sum(tensor_ref));
         let tensor = Tensor {
             shape: vec![1],
             tensor_context: self.self_reference.as_mut().unwrap().clone(),
@@ -132,39 +132,91 @@ impl TensorContext {
     pub fn backwards(&mut self, tensor_ref: TensorRef) {
         let tensor = &self.tensors[tensor_ref];
         let tensor_size = tensor.data.len();
-        let output_grad = tensor.grad.clone().unwrap_or_else(|| vec![0.0; tensor_size]);
+        let output_grad = tensor
+            .grad
+            .clone()
+            .unwrap_or_else(|| vec![0.0; tensor_size]);
         let operation = tensor.operation.clone();
-    
-        match operation {
-            Some(Operation::Add(predecessors)) => {
-                for predecessor_ref in predecessors {
-                    let grad = &mut self.tensors[predecessor_ref].grad;
-                    match grad {
-                        Some(grad) => grad.iter_mut().zip(&output_grad).for_each(|(a, b)| *a = *b),
-                        None => self.tensors[predecessor_ref].grad = Some(output_grad.clone()),
+        {
+            match operation {
+                Some(Operation::Add(ref predecessors)) => {
+                    for predecessor_ref in predecessors {
+                        let grad = &mut self.tensors[*predecessor_ref].grad;
+                        match grad {
+                            Some(grad) => {
+                                grad.iter_mut().zip(&output_grad).for_each(|(a, b)| *a = *b)
+                            }
+                            None => self.tensors[*predecessor_ref].grad = Some(output_grad.clone()),
+                        }
                     }
                 }
-            }
-            Some(Operation::Mul(left, right)) => {
-                let right_tensor_data = self.tensors[right].data.clone();
-                let left_tensor_data = self.tensors[left].data.clone();
-    
-                if let Some(left_grad) = &mut self.tensors[left].grad {
-                    left_grad.iter_mut().zip(&output_grad).zip(&right_tensor_data).for_each(|((a, b), c)| *a = b * c);
-                } else {
-                    self.tensors[left].grad = Some(output_grad.iter().zip(&right_tensor_data).map(|(a, b)| a * b).collect());
+                Some(Operation::Sum(target)) => {
+                    let output_grad = output_grad[0];
+                    let target_size = self.tensors[target].data.len();
+                    let grad = &mut self.tensors[target].grad;
+                    match grad {
+                        Some(grad) => grad.iter_mut().for_each(|a| *a = output_grad),
+                        None => self.tensors[target].grad = Some(vec![output_grad; target_size]),
+                    }
                 }
-    
-                if let Some(right_grad) = &mut self.tensors[right].grad {
-                    right_grad.iter_mut().zip(&output_grad).zip(&left_tensor_data).for_each(|((a, b), c)| *a = b * c);
-                } else {
-                    self.tensors[right].grad = Some(output_grad.iter().zip(&left_tensor_data).map(|(a, b)| a * b).collect());
+                Some(Operation::Mul(left, right)) => {
+                    let right_tensor_data = self.tensors[right].data.clone();
+                    let left_tensor_data = self.tensors[left].data.clone();
+
+                    if let Some(left_grad) = &mut self.tensors[left].grad {
+                        left_grad
+                            .iter_mut()
+                            .zip(&output_grad)
+                            .zip(&right_tensor_data)
+                            .for_each(|((a, b), c)| *a = b * c);
+                    } else {
+                        self.tensors[left].grad = Some(
+                            output_grad
+                                .iter()
+                                .zip(&right_tensor_data)
+                                .map(|(a, b)| a * b)
+                                .collect(),
+                        );
+                    }
+
+                    if let Some(right_grad) = &mut self.tensors[right].grad {
+                        right_grad
+                            .iter_mut()
+                            .zip(&output_grad)
+                            .zip(&left_tensor_data)
+                            .for_each(|((a, b), c)| *a = b * c);
+                    } else {
+                        self.tensors[right].grad = Some(
+                            output_grad
+                                .iter()
+                                .zip(&left_tensor_data)
+                                .map(|(a, b)| a * b)
+                                .collect(),
+                        );
+                    }
                 }
+                _ => {}
             }
-            _ => {}
+        }
+        {
+            match operation {
+                Some(Operation::Add(ref predecessors)) => {
+                    for predecessor_ref in predecessors {
+                        let cloned_predecessor_ref = *predecessor_ref;
+                        self.backwards(cloned_predecessor_ref);
+                    }
+                }
+                Some(Operation::Sum(target)) => {
+                    self.backwards(target);
+                }
+                Some(Operation::Mul(left, right)) => {
+                    self.backwards(left);
+                    self.backwards(right);
+                }
+                _ => {}
+            }
         }
     }
-    
 
     pub fn apply(
         &mut self,
@@ -431,8 +483,14 @@ mod tests {
         let tensor_ref1 = tensor_context.borrow_mut().new_tensor(vec![1], vec![1.0]);
         let tensor_ref2 = tensor_context.borrow_mut().new_tensor(vec![1], vec![2.0]);
 
-        assert_eq!(tensor_context.borrow_mut().get_tensor(tensor_ref1).grad, None);
-        assert_eq!(tensor_context.borrow_mut().get_tensor(tensor_ref2).grad, None);
+        assert_eq!(
+            tensor_context.borrow_mut().get_tensor(tensor_ref1).grad,
+            None
+        );
+        assert_eq!(
+            tensor_context.borrow_mut().get_tensor(tensor_ref2).grad,
+            None
+        );
 
         let tensor_ref3 = tensor_context.borrow_mut().mul(tensor_ref1, tensor_ref2);
         let tensor = tensor_context.borrow_mut().get_tensor(tensor_ref3);
@@ -447,6 +505,77 @@ mod tests {
 
         assert_eq!(tensor1.grad, Some(vec![2.0]));
         assert_eq!(tensor2.grad, Some(vec![1.0]));
+    }
 
+    #[test]
+    pub fn test_sum_backwards() {
+        let tensor_context = create_tensor_context!(20);
+        let tensor_ref1 = tensor_context
+            .borrow_mut()
+            .new_tensor(vec![2], vec![1.0, 1.0]);
+        let tensor_ref2 = tensor_context.borrow_mut().sum(tensor_ref1);
+        let tensor = tensor_context.borrow_mut().get_tensor(tensor_ref2);
+        assert_eq!(tensor.data, vec![2.0]);
+
+        assert_eq!(
+            tensor_context.borrow_mut().get_tensor(tensor_ref1).grad,
+            None
+        );
+
+        tensor_context.borrow_mut().set_grad(tensor_ref2, vec![1.0]);
+        tensor_context.borrow_mut().backwards(tensor_ref2);
+
+        let tensor1 = tensor_context.borrow_mut().get_tensor(tensor_ref1);
+        assert_eq!(tensor1.grad, Some(vec![1.0, 1.0]));
+    }
+
+    #[test]
+    pub fn test_dot_product() {
+        let tensor_context = create_tensor_context!(20);
+        let tensor_ref1 = tensor_context
+            .borrow_mut()
+            .new_tensor(vec![2], vec![1.0, 1.0]);
+        let tensor_ref2 = tensor_context
+            .borrow_mut()
+            .new_tensor(vec![2], vec![1.0, 1.0]);
+        let tensor_ref3 = tensor_context
+            .borrow_mut()
+            .dot_product(tensor_ref1, tensor_ref2);
+        let tensor = tensor_context.borrow_mut().get_tensor(tensor_ref3);
+        assert_eq!(tensor.data, vec![2.0]);
+    }
+
+    #[test]
+    pub fn test_dot_product_backwards() {
+        let tensor_context = create_tensor_context!(20);
+        let tensor_ref1 = tensor_context
+            .borrow_mut()
+            .new_tensor(vec![2], vec![2.0, 1.0]);
+        let tensor_ref2 = tensor_context
+            .borrow_mut()
+            .new_tensor(vec![2], vec![1.0, 2.0]);
+        let tensor_ref3 = tensor_context
+            .borrow_mut()
+            .dot_product(tensor_ref1, tensor_ref2);
+        let tensor = tensor_context.borrow_mut().get_tensor(tensor_ref3);
+        assert_eq!(tensor.data, vec![4.0]);
+
+        assert_eq!(
+            tensor_context.borrow_mut().get_tensor(tensor_ref1).grad,
+            None
+        );
+        assert_eq!(
+            tensor_context.borrow_mut().get_tensor(tensor_ref2).grad,
+            None
+        );
+
+        tensor_context.borrow_mut().set_grad(tensor_ref3, vec![1.0]);
+        tensor_context.borrow_mut().backwards(tensor_ref3);
+
+        let tensor1 = tensor_context.borrow_mut().get_tensor(tensor_ref1);
+        let tensor2 = tensor_context.borrow_mut().get_tensor(tensor_ref2);
+
+        assert_eq!(tensor1.grad, Some(vec![1.0, 2.0]));
+        assert_eq!(tensor2.grad, Some(vec![2.0, 1.0]));
     }
 }
