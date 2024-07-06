@@ -23,9 +23,10 @@ impl Sequential {
 
 impl Model for Sequential {
     // For now this just fixes the layer weights so the model can be used for testing
-    fn compile(&mut self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
+    fn compile(&mut self, input_shape: Vec<usize>, output_shape: Vec<usize>, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>) {
         // Iterate thropugh all layers and compile them
-        let mut last_layer = None;
+        let dummy = self.context.borrow_mut().new_tensor(input_shape.clone(), vec![0.0; input_shape.iter().fold(1, |acc, x| acc * x)]);
+        let mut last_layer = Some(dummy);
         for layer in self.layers.iter_mut() {
             last_layer = Some(layer.compile(last_layer.unwrap()));
         }
@@ -62,8 +63,15 @@ impl Model for Sequential {
         }
     }
 
-    fn predict(&self, data:Vec<f64>) -> f64 {
-        todo!()
+    fn predict(&mut self, data:Vec<f64>) -> Vec<f64> {
+        let input = self.context.borrow_mut().new_tensor(vec![data.len()], data).clone();
+            let mut previous_layer_output = input.clone();
+            for layer in self.layers.iter() {
+                previous_layer_output = layer.forward(previous_layer_output);
+            }
+
+            let final_output = previous_layer_output;
+        self.context.borrow_mut().get_tensor(final_output).data
     }
 
     fn evaluate(&self, data:Vec<f64>, labels:Vec<f64>) -> (f64, f64) {
@@ -76,9 +84,9 @@ impl Model for Sequential {
 }
 
 pub trait Model {
-    fn compile(&mut self, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>);
+    fn compile(&mut self, input_shape: Vec<usize>, output_shape:Vec<usize>, optimizer: Optimizer, loss: LossFunction, metrics: Vec<Metric>);
     fn fit(&mut self, data:TensorRef, labels:TensorRef, epochs: usize);
-    fn predict(&self, data:Vec<f64>) -> f64;
+    fn predict(&mut self, data:Vec<f64>) -> Vec<f64>;
     fn evaluate(&self, data:Vec<f64>, labels:Vec<f64>) -> (f64, f64);
     fn save(&self);
 }

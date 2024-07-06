@@ -35,16 +35,15 @@ impl Nueron {
     }
 
     pub fn initialize(&mut self, input_tensor: TensorRef) -> TensorRef {
-        let context = &mut self.tensor_context.borrow_mut();
-
-        let dot_product_tensor = context.dot_product(input_tensor, self.weights.unwrap());
-        let sum_tensor = context.add(dot_product_tensor, self.bias.unwrap());
-        let activation_function_tensor = context.apply(self.activation_function, sum_tensor);
+        let dot_product_tensor = self.tensor_context.borrow_mut().dot_product(input_tensor, self.weights.unwrap());
+        // let sum_tensor = self.tensor_context.borrow_mut().add(dot_product_tensor, self.bias.unwrap());
+        // let activation_function_tensor = self.tensor_context.borrow_mut().apply(self.activation_function, sum_tensor);
         
-        self.dot_product = Some(dot_product_tensor);
-        self.activation_input = Some(sum_tensor);
-        self.activation_output = Some(activation_function_tensor);
-        activation_function_tensor
+        // self.dot_product = Some(dot_product_tensor);
+        // self.activation_input = Some(sum_tensor);
+        // self.activation_output = Some(activation_function_tensor);
+        // activation_function_tensor
+        dot_product_tensor
     }
 
     pub fn feed_forward(&self, input_tensor: TensorRef) -> TensorRef {
