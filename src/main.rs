@@ -9,7 +9,6 @@ use graph::{
 use layers::{dense::Dense, dropout::Dropout, flatten::Flatten, layers::layers::Layer};
 use nuerons::activation_function::ActivationFunction;
 use std::{cell::RefCell, rc::Rc, vec};
-use math::tensor_context;
 
 pub mod file;
 pub mod graph;
@@ -46,7 +45,7 @@ fn main() {
     // println!("{:?}", network.predict(training_data.data[0..28*28].to_vec()).len());
 
     let epochs = 10;
-    network.fit(training_data.clone(), training_labels.clone(), epochs);
+    // network.fit(training_data.clone(), training_labels.clone(), epochs);
 
     println!("Training done!");
 

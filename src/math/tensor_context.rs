@@ -13,8 +13,12 @@ pub struct TensorContext {
     self_reference: Option<Rc<RefCell<TensorContext>>>,
 }
 
+#[macro_export]
 macro_rules! create_tensor_context {
     ($size:expr) => {{
+        use crate::math::tensor_context;
+        use std::{cell::RefCell, rc::Rc};
+        
         let tensor_context = tensor_context::TensorContext::new($size);
         let tensor_context_ref = Rc::new(RefCell::new(tensor_context));
         tensor_context_ref
