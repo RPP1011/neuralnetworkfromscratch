@@ -67,4 +67,5 @@ pub enum Operation {
     Slice,
     ReLU(TensorRef),
     Concat(Vec<TensorRef>),
+    Composite(Vec<(Operation, TensorRef)>),
 }

@@ -20,9 +20,9 @@ fn main() {
     let tensor_context = create_tensor_context!(1024);
     let layers: Vec<Box<dyn Layer>> = vec![
         Box::new(Flatten::new(tensor_context.clone(), vec![28, 28])),
-        Box::new(Dense::new(tensor_context.clone(), 128, ActivationFunction::ReLU)),
-        Box::new(Dropout::new(tensor_context.clone(), 0.2, false)),
         Box::new(Dense::new(tensor_context.clone(), 10, ActivationFunction::ReLU)),
+        // Box::new(Dropout::new(tensor_context.clone(), 0.2, false)),
+        // Box::new(Dense::new(tensor_context.clone(), 10, ActivationFunction::ReLU)),
     ];
     let mut network = Sequential::new(tensor_context.clone(), layers);
 
@@ -48,13 +48,6 @@ fn main() {
     // network.fit(training_data.clone(), training_labels.clone(), epochs);
 
     println!("Training done!");
-
-    // predict first 10 images
-    for i in 0..10 {
-        let prediction = network.predict(training_data.data[i*28*28..(i+1)*28*28].to_vec());
-        let label = training_labels.data[i];
-        println!("Prediction: {:?}, Label: {:?}", prediction, label);
-    }
 
     // network.visualize()
 }

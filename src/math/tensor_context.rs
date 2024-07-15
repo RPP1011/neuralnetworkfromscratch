@@ -18,7 +18,7 @@ macro_rules! create_tensor_context {
     ($size:expr) => {{
         use crate::math::tensor_context;
         use std::{cell::RefCell, rc::Rc};
-        
+
         let tensor_context = tensor_context::TensorContext::new($size);
         let tensor_context_ref = Rc::new(RefCell::new(tensor_context));
         tensor_context_ref
@@ -149,11 +149,6 @@ impl TensorContext {
         };
         tensors.push(tensor);
         tensors.len() - 1
-    }
-
-    pub fn dot_product(&mut self, tensor_ref1: TensorRef, tensor_ref2: TensorRef) -> TensorRef {
-        let mul_result = self.mul(tensor_ref1, tensor_ref2);
-        self.sum(mul_result)
     }
 
     pub fn mul(&mut self, tensor_ref1: TensorRef, tensor_ref2: TensorRef) -> TensorRef {
@@ -401,11 +396,8 @@ impl TensorContext {
     pub fn dot_product_inplace(
         &mut self,
         tensor_ref1: TensorRef,
-        tensor_ref2: TensorRef,
-        output_tensor_ref: TensorRef,
     ) {
-        let mul_result = self.mul(tensor_ref1, tensor_ref2);
-        self.sum_inplace(mul_result, output_tensor_ref);
+        
     }
 
     pub fn mul_inplace(
@@ -688,55 +680,5 @@ mod tests {
 
         let tensor1 = tensor_context.borrow_mut().get_tensor(tensor_ref1);
         assert_eq!(tensor1.grad, Some(vec![1.0, 1.0]));
-    }
-
-    #[test]
-    pub fn test_dot_product() {
-        let tensor_context = create_tensor_context!(20);
-        let tensor_ref1 = tensor_context
-            .borrow_mut()
-            .new_tensor(vec![2], vec![1.0, 1.0]);
-        let tensor_ref2 = tensor_context
-            .borrow_mut()
-            .new_tensor(vec![2], vec![1.0, 1.0]);
-        let tensor_ref3 = tensor_context
-            .borrow_mut()
-            .dot_product(tensor_ref1, tensor_ref2);
-        let tensor = tensor_context.borrow_mut().get_tensor(tensor_ref3);
-        assert_eq!(tensor.data, vec![2.0]);
-    }
-
-    #[test]
-    pub fn test_dot_product_backwards() {
-        let tensor_context = create_tensor_context!(20);
-        let tensor_ref1 = tensor_context
-            .borrow_mut()
-            .new_tensor(vec![2], vec![2.0, 1.0]);
-        let tensor_ref2 = tensor_context
-            .borrow_mut()
-            .new_tensor(vec![2], vec![1.0, 2.0]);
-        let tensor_ref3 = tensor_context
-            .borrow_mut()
-            .dot_product(tensor_ref1, tensor_ref2);
-        let tensor = tensor_context.borrow_mut().get_tensor(tensor_ref3);
-        assert_eq!(tensor.data, vec![4.0]);
-
-        assert_eq!(
-            tensor_context.borrow_mut().get_tensor(tensor_ref1).grad,
-            None
-        );
-        assert_eq!(
-            tensor_context.borrow_mut().get_tensor(tensor_ref2).grad,
-            None
-        );
-
-        tensor_context.borrow_mut().set_grad(tensor_ref3, vec![1.0]);
-        tensor_context.borrow_mut().backwards(tensor_ref3);
-
-        let tensor1 = tensor_context.borrow_mut().get_tensor(tensor_ref1);
-        let tensor2 = tensor_context.borrow_mut().get_tensor(tensor_ref2);
-
-        assert_eq!(tensor1.grad, Some(vec![1.0, 2.0]));
-        assert_eq!(tensor2.grad, Some(vec![2.0, 1.0]));
     }
 }

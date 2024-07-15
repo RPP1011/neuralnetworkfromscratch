@@ -5,10 +5,10 @@ use crate::layers::layers::layers::Layer;
 
 use crate::math::tensor_context::{TensorContext, TensorRef};
 use crate::nuerons::activation_function::ActivationFunction;
-use crate::nuerons::nuerons::Nueron;
+use crate::nuerons::nuerons::Neuron;
 
 pub struct Dense {
-    pub neurons: Vec<Nueron>,
+    pub neurons: Vec<Neuron>,
     tensor_context: Rc<RefCell<TensorContext>>,
     output_tensor: Option<TensorRef>,
     input_tensor: Option<TensorRef>,
@@ -16,11 +16,15 @@ pub struct Dense {
 
 impl Layer for Dense {
     fn forward(&self, input: TensorRef) -> TensorRef {
+        println!("Forwarding through Dense Layer");
+        println!("Input Data: {:?}", self.tensor_context.borrow_mut().get_tensor(input).data.iter().fold(0, |acc, x| acc + x.round() as i32));
         let feed_forward_results: Vec<TensorRef> = self
             .neurons
             .iter()
             .map(|neuron| neuron.feed_forward(input))
             .collect();
+        println!("Feed Forward Results: {:?}", feed_forward_results);
+
         self.tensor_context
             .borrow_mut()
             .concat_inplace(feed_forward_results, self.output_tensor.unwrap());
@@ -58,7 +62,24 @@ impl Dense {
     ) -> Dense {
         let mut neurons = Vec::new();
         for _ in 0..n {
-            neurons.push(Nueron::new(tensor_context.clone(), 1, activation_function));
+            neurons.push(Neuron::new(tensor_context.clone(), 1, activation_function));
+        }
+        Dense {
+            neurons,
+            tensor_context,
+            output_tensor: None,
+            input_tensor: None,
+        }
+    }
+
+    pub fn new_with_ones(
+        tensor_context: Rc<RefCell<TensorContext>>,
+        n: usize,
+        activation_function: ActivationFunction,
+    ) -> Dense {
+        let mut neurons = Vec::new();
+        for _ in 0..n {
+            neurons.push(Neuron::new_ones(tensor_context.clone(), 1, activation_function));
         }
         Dense {
             neurons,

@@ -47,6 +47,7 @@ impl Model for Sequential {
         let mut last_layer = Some(dummy);
         for layer in self.layers.iter_mut() {
             last_layer = Some(layer.compile(last_layer.unwrap()));
+            println!("Compiled Layer: {:?}", last_layer);
         }
         self.output_value = last_layer;
     }
@@ -125,13 +126,20 @@ impl Model for Sequential {
     }
 
     fn predict(&mut self, data: Vec<f64>) -> Vec<f64> {
+        println!("Input: {:?}", data.clone().iter().fold(0, |acc, x| acc + x.round() as i32));
+
         let input = self.context.borrow_mut().new_tensor(vec![data.len()], data);
+        println!("Input Tensor: {:?}", input);
+
+
         let mut previous_layer_output = input;
         for layer in self.layers.iter() {
             previous_layer_output = layer.forward(previous_layer_output);
+            println!("Layer Output: {:?}", self.context.borrow_mut().get_tensor(previous_layer_output).data.iter().fold(0, |acc, x| acc + x.round() as i32));
         }
 
         let final_output = previous_layer_output;
+        println!("Output Tensor: {:?}", final_output);
         self.context.borrow_mut().get_tensor(final_output).data
     }
 
@@ -158,4 +166,41 @@ pub trait Model {
     fn predict_tensor(&mut self, data: TensorRef) -> TensorRef;
     fn evaluate(&self, data: Vec<f64>, labels: Vec<f64>) -> (f64, f64);
     fn save(&self);
+}
+
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use crate::{create_tensor_context, layers::dense::Dense, nuerons::activation_function::ActivationFunction};
+
+    use super::*;
+    
+    #[test]
+    fn test_predict() {
+        // Create a sequential model with a single dense layer
+        let context = create_tensor_context!(1024);
+        let layer = Dense::new_with_ones(context.clone(), 1, ActivationFunction::ReLU);
+        let mut model = Sequential::new(context, vec![Box::new(layer)]);
+        
+        model.compile(vec![1], vec![1], Optimizer::SGD, LossFunction::MeanSquaredError, vec![Metric::Accuracy]);
+        // Input data
+        let input = vec![2.0];
+        
+        // Expected output
+        let expected_output = vec![2.0 * 1.0];
+        
+        // Predict using the model
+        let output = model.predict(input);
+        
+        // Check if the predicted output matches the expected output
+        assert_eq!(output, expected_output);
+
+        // Do another forward pass with another input tensor
+        let input = vec![3.0];
+        let expected_output = vec![3.0 * 1.0];
+        let output = model.predict(input);
+        assert_eq!(output, expected_output);
+    }
 }
