@@ -9,6 +9,8 @@ use crate::nuerons::nuerons::Neuron;
 
 pub struct Dense {
     pub neurons: Vec<Neuron>,
+    size: usize,
+    activation_function: ActivationFunction,
     tensor_context: Rc<RefCell<TensorContext>>,
     output_tensor: Option<TensorRef>,
     input_tensor: Option<TensorRef>,
@@ -17,13 +19,11 @@ pub struct Dense {
 impl Layer for Dense {
     fn forward(&self, input: TensorRef) -> TensorRef {
         println!("Forwarding through Dense Layer");
-        println!("Input Data: {:?}", self.tensor_context.borrow_mut().get_tensor(input).data.iter().fold(0, |acc, x| acc + x.round() as i32));
         let feed_forward_results: Vec<TensorRef> = self
             .neurons
             .iter()
             .map(|neuron| neuron.feed_forward(input))
             .collect();
-        println!("Feed Forward Results: {:?}", feed_forward_results);
 
         self.tensor_context
             .borrow_mut()
@@ -33,6 +33,11 @@ impl Layer for Dense {
 
     fn compile(&mut self, input: TensorRef) -> TensorRef {
         self.input_tensor = Some(input);
+        let input_size = self.tensor_context.borrow().get_tensor(input).shape[0];
+
+        for _ in 0..self.size {
+            self.neurons.push(Neuron::new(self.tensor_context.clone(), input_size, self.activation_function));
+        }
 
         let initialize_results: Vec<TensorRef> = self
             .neurons
@@ -60,30 +65,13 @@ impl Dense {
         n: usize,
         activation_function: ActivationFunction,
     ) -> Dense {
-        let mut neurons = Vec::new();
-        for _ in 0..n {
-            neurons.push(Neuron::new(tensor_context.clone(), 1, activation_function));
-        }
-        Dense {
-            neurons,
-            tensor_context,
-            output_tensor: None,
-            input_tensor: None,
-        }
-    }
+        let neurons = Vec::new();
 
-    pub fn new_with_ones(
-        tensor_context: Rc<RefCell<TensorContext>>,
-        n: usize,
-        activation_function: ActivationFunction,
-    ) -> Dense {
-        let mut neurons = Vec::new();
-        for _ in 0..n {
-            neurons.push(Neuron::new_ones(tensor_context.clone(), 1, activation_function));
-        }
         Dense {
             neurons,
             tensor_context,
+            activation_function,
+            size: n,
             output_tensor: None,
             input_tensor: None,
         }

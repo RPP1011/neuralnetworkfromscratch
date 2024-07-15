@@ -24,7 +24,7 @@ impl Neuron {
     ) -> Neuron {
         let random_weights = tensor_context
             .borrow_mut()
-            .new_tensor(vec![weight_count], vec![rand::random::<f64>()]);
+            .new_tensor(vec![weight_count], vec![rand::random::<f64>(); weight_count]);
         let random_bias = tensor_context
             .borrow_mut()
             .new_tensor(vec![1], vec![rand::random::<f64>()]);
@@ -39,37 +39,19 @@ impl Neuron {
         }
     }
 
-    pub fn new_ones(
-        tensor_context: Rc<RefCell<TensorContext>>,
-        weight_count: usize,
-        activation_function: ActivationFunction,
-    ) -> Neuron {
-        let ones_weights = tensor_context
-            .borrow_mut()
-            .new_tensor(vec![weight_count], vec![1.0]);
-        let ones_bias = tensor_context.borrow_mut().new_tensor(vec![1], vec![0.0]);
-        Neuron {
-            tensor_context,
-            activation_function,
-            bias: Some(ones_bias),
-            weights: Some(ones_weights),
-            dot_product: None,
-            sum_output: None,
-            activation_output: None,
-        }
-    }
-
     pub fn initialize(&mut self, input_tensor: TensorRef) -> TensorRef {
         self.dot_product = Some(CompositeOperation::dot_product(self.tensor_context.clone(), input_tensor, self.weights.unwrap()));
         let dot_output = self.dot_product.as_ref().unwrap().output_tensor;
         self.sum_output = Some(self.tensor_context.borrow_mut().add(dot_output, self.bias.unwrap()));
         self.activation_output = Some(self.tensor_context.borrow_mut().apply( self.activation_function, self.sum_output.unwrap()));
+       
         self.activation_output.unwrap()
     }
 
     pub fn feed_forward(&self, input_tensor: TensorRef) -> TensorRef {
         let bias = self.bias.unwrap();
         self.dot_product.as_ref().unwrap().perform();
+
         self.tensor_context.borrow_mut().add_inplace(
             self.dot_product.as_ref().unwrap().output_tensor,
             bias,

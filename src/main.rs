@@ -37,12 +37,11 @@ fn main() {
         vec![Metric::Accuracy],
     );
      // predict first 10 images
-     for i in 0..10 {
+    for i in 0..10 {
         let prediction = network.predict(training_data.data[i*28*28..(i+1)*28*28].to_vec());
         let label = training_labels.data[i];
         println!("Prediction: {:?}, Label: {:?}", prediction, label);
     }
-    // println!("{:?}", network.predict(training_data.data[0..28*28].to_vec()).len());
 
     let epochs = 10;
     // network.fit(training_data.clone(), training_labels.clone(), epochs);
