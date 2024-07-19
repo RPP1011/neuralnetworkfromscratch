@@ -18,7 +18,6 @@ pub struct Dense {
 
 impl Layer for Dense {
     fn forward(&self, input: TensorRef) -> TensorRef {
-        println!("Forwarding through Dense Layer");
         let feed_forward_results: Vec<TensorRef> = self
             .neurons
             .iter()

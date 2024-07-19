@@ -4,7 +4,7 @@
 
 Current Step 1: Making graph with arena approach
 
-1. Make MLP NN capable of attaining 80% accuracy on MNIST 
+1. Make MLP NN capable of attaining 80% accuracy on MNIST (The amount of time spent on this step is agonizing)
 2. Make ConvNet capable of image classification
 3. Make ConvNet version of MNIST
 4. Make PINN Network
@@ -15,4 +15,4 @@ Current Step 1: Making graph with arena approach
 9. GAN network.
 
 ## Concerns.
-1. The current tensor design is not well suited for neural networks. Memory is being allocated far too frequently
+1. I need a loss vs epoch graph stat
