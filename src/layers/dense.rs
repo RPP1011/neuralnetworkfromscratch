@@ -121,9 +121,9 @@ mod tests {
 
 
         // Check how additional input tensor affects output tensor
-        let input = tensor_context.borrow_mut().new_tensor(vec![2], vec![5.0, 6.0]);
+        let input = tensor_context.borrow_mut().new_tensor(vec![2], vec![7.0, 8.0]);
         let output = dense.forward(input);
         let output_values = tensor_context.borrow_mut().get_tensor(output).data.clone();
-        assert_ne!(output_values, old_output_values);
+        assert_ne!(output_values, old_output_values); // This is probably the root of the problem
     }
 }
