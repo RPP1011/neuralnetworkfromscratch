@@ -62,6 +62,7 @@ pub enum Operation {
     Sum(TensorRef),
     Mean,
     Dot,
+    Tanh(TensorRef),
     Transpose,
     Reshape,
     Slice,

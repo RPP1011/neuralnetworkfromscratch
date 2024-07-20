@@ -204,6 +204,7 @@ impl TensorContext {
     pub fn backwards(&mut self, tensor_ref: TensorRef) {
         let tensor = &self.tensors[tensor_ref];
         let tensor_size = tensor.data.len();
+        let output_data = tensor.data.clone();
         let output_grad = tensor
             .grad
             .clone()
@@ -301,13 +302,34 @@ impl TensorContext {
                     match grad {
                         Some(grad) => grad
                             .iter_mut()
+                            .zip(output_data.iter())
                             .zip(output_grad.iter())
-                            .for_each(|(a, b)| *a += if *b > 0.0 { 1.0 } else { 0.0 }),
+                            .for_each(|((pred, output_data), output_grad)| *pred += if *output_data > 0.0 { *output_grad} else { 0.0 }),
                         None => {
                             self.tensors[predecessor].grad = Some(
                                 output_grad
                                     .iter()
-                                    .map(|a| if *a > 0.0 { 1.0 } else { 0.0 })
+                                    .zip(output_data.iter())
+                                    .zip(output_grad.iter())
+                                    .map(|((pred, output_data), output_grad)| if *output_data > 0.0 { *output_grad } else { 0.0 })
+                                    .collect::<Vec<f64>>(),
+                            )
+                        }
+                    }
+                }
+                Some(Operation::Tanh(predecessor)) => {
+                    let grad = &mut self.tensors[predecessor].grad;
+                    match grad {
+                        Some(grad) => grad
+                            .iter_mut()
+                            .zip(output_grad.iter())
+                            .for_each(|(a, b)| *a += (1.0 - a.powi(2)) * b),
+                        None => {
+                            self.tensors[predecessor].grad = Some(
+                                output_grad
+                                    .iter()
+                                    .zip(output_grad.iter())
+                                    .map(|(a, b)| (1.0 - a.powi(2)) * *b)
                                     .collect::<Vec<f64>>(),
                             )
                         }
@@ -363,7 +385,22 @@ impl TensorContext {
                 self.tensors.push(tensor);
                 self.tensors.len() - 1
             }
-            activation_function::ActivationFunction::Tanh => todo!(),
+            activation_function::ActivationFunction::Tanh => {
+                let tensor = &self.tensors[tensor_ref];
+                let data = tensor.data.iter().map(|a| a.tanh()).collect();
+                let grad: Option<Vec<f64>> = None;
+                let operation = Some(Operation::Tanh(tensor_ref));
+                let tensor = Tensor {
+                    shape: tensor.shape.clone(),
+                    tensor_context: self.self_reference.as_mut().unwrap().clone(),
+                    tensor_ref: self.tensors.len(),
+                    data,
+                    grad,
+                    operation,
+                };
+                self.tensors.push(tensor);
+                self.tensors.len() - 1
+            },
             activation_function::ActivationFunction::Softmax => todo!(),
             activation_function::ActivationFunction::LeakyReLU => todo!(),
         }
@@ -422,11 +459,37 @@ impl TensorContext {
         match activation_function {
             activation_function::ActivationFunction::Sigmoid => todo!(),
             activation_function::ActivationFunction::ReLU => {
-                let tensor = &self.tensors[tensor_ref];
-                let data = tensor.data.iter().map(|a| a.max(0.0)).collect();
-                self.tensors[output_tensor_ref].data = data;
+                let (left, right) = self.tensors.split_at_mut(std::cmp::max(tensor_ref, output_tensor_ref));
+                if tensor_ref < output_tensor_ref {
+                    right[output_tensor_ref - tensor_ref - 1]
+                        .data
+                        .iter_mut()
+                        .zip(left[tensor_ref].data.iter())
+                        .for_each(|(a, b)| *a = b.max(0.0));
+                } else {
+                    left[output_tensor_ref]
+                        .data
+                        .iter_mut()
+                        .zip(right[0].data.iter())
+                        .for_each(|(a, b)| *a = b.max(0.0));
+                }
             }
-            activation_function::ActivationFunction::Tanh => todo!(),
+            activation_function::ActivationFunction::Tanh => {
+                let (left, right) = self.tensors.split_at_mut(std::cmp::max(tensor_ref, output_tensor_ref));
+                if tensor_ref < output_tensor_ref {
+                    right[output_tensor_ref - tensor_ref - 1]
+                        .data
+                        .iter_mut()
+                        .zip(left[tensor_ref].data.iter())
+                        .for_each(|(a, b)| *a = b.tanh());
+                } else {
+                    left[output_tensor_ref]
+                        .data
+                        .iter_mut()
+                        .zip(right[0].data.iter())
+                        .for_each(|(a, b)| *a = b.tanh());
+                }
+            },
             activation_function::ActivationFunction::Softmax => todo!(),
             activation_function::ActivationFunction::LeakyReLU => todo!(),
         };

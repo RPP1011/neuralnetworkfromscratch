@@ -15,6 +15,7 @@ pub struct Sequential {
     pub context: Rc<RefCell<TensorContext>>,
     output_value: Option<TensorRef>,
     loss_function: LossFunction,
+    parameters: Vec<TensorRef>,
 }
 
 impl Sequential {
@@ -24,6 +25,7 @@ impl Sequential {
             context,
             output_value: None,
             loss_function: LossFunction::MeanSquaredError,
+            parameters: vec![],
         }
     }
 }
@@ -50,6 +52,8 @@ impl Model for Sequential {
             println!("Compiled Layer: {:?}", last_layer);
         }
         self.output_value = last_layer;
+
+        self.parameters = self.layers.iter().map(|layer| layer.get_parameters()).flatten().collect();
     }
 
     fn fit(&mut self, data: Tensor, labels: Tensor, epochs: usize) {
@@ -105,16 +109,9 @@ impl Model for Sequential {
 
             self.context.borrow_mut().backwards(full_loss);
 
-            self.layers
-                .iter_mut()
-                .map(|layer| layer.get_parameters())
-                .flatten()
-                .for_each(|parameter| {
-                    self.context
-                        .borrow_mut()
-                        .update_data_from_grad(parameter, -0.01);
-                    self.context.borrow_mut().reset_grads(parameter);
-                });
+            self.parameters.iter().for_each(|parameter| {
+                self.context.borrow_mut().update_data_from_grad(*parameter, -0.1);
+            });
         }
     }
     fn predict_tensor(&mut self, data: TensorRef) -> TensorRef {
