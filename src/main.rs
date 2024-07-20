@@ -6,7 +6,7 @@ use graph::{
     network_metric::Metric,
     optimizer::Optimizer,
 };
-use layers::{dense::Dense, dropout::Dropout, flatten::Flatten, layers::layers::Layer};
+use layers::{dense::Dense, dropout::Dropout, flatten::Flatten, input::Input, layers::layers::Layer};
 use nuerons::activation_function::ActivationFunction;
 use sample_functions::sine_wave::SineWaveGenerator;
 use std::{cell::RefCell, rc::Rc, vec};
@@ -26,7 +26,8 @@ fn main() {
 fn try_sin() {
     let tensor_context = create_tensor_context!(4096);
     let layers: Vec<Box<dyn Layer>> = vec![
-        Box::new(Dense::new(tensor_context.clone(), 1, ActivationFunction::ReLU)),
+        Box::new(Input::new(tensor_context.clone(), vec![1])),
+        Box::new(Dense::new(tensor_context.clone(), 10, ActivationFunction::ReLU)),
         Box::new(Dense::new(tensor_context.clone(), 10, ActivationFunction::ReLU)),
         Box::new(Dense::new(tensor_context.clone(), 10, ActivationFunction::ReLU)),
         Box::new(Dense::new(tensor_context.clone(), 1, ActivationFunction::ReLU)),

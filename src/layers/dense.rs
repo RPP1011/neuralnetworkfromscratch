@@ -27,6 +27,7 @@ impl Layer for Dense {
         self.tensor_context
             .borrow_mut()
             .concat_inplace(feed_forward_results, self.output_tensor.unwrap());
+        
         self.output_tensor.unwrap()
     }
 
@@ -104,14 +105,12 @@ mod tests {
         // Check if the output tensor has the correct values
         let output_values = tensor_context.borrow_mut().get_tensor(output).data.clone();
         assert_ne!(output_values, vec![0.0, 0.0, 0.0]);
-        println!("{:?}", output_values);
 
         // Check if the output tensor responds to changes in input tensor
         tensor_context.borrow_mut().set_data(input, vec![3.0, 4.0]);
         dense.forward(input);
         let new_output_values = tensor_context.borrow_mut().get_tensor(output).data.clone();
         assert_ne!(new_output_values, output_values);
-        println!("{:?}", new_output_values);
 
         // Check if additional forward passes affect output tensor
         let old_output_values = new_output_values.clone();
@@ -119,11 +118,11 @@ mod tests {
         let new_output_values = tensor_context.borrow_mut().get_tensor(output).data.clone();
         assert_eq!(old_output_values, new_output_values);
 
-
-        // Check how additional input tensor affects output tensor
         let input = tensor_context.borrow_mut().new_tensor(vec![2], vec![7.0, 8.0]);
+        dense.compile(input);
         let output = dense.forward(input);
         let output_values = tensor_context.borrow_mut().get_tensor(output).data.clone();
         assert_ne!(output_values, old_output_values); // This is probably the root of the problem
     }
 }
+

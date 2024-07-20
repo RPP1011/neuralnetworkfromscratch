@@ -393,12 +393,7 @@ impl TensorContext {
         self.tensors[output_tensor_ref].data = vec![sum];
     }
 
-    pub fn dot_product_inplace(
-        &mut self,
-        tensor_ref1: TensorRef,
-    ) {
-        
-    }
+    pub fn dot_product_inplace(&mut self, tensor_ref1: TensorRef) {}
 
     pub fn mul_inplace(
         &mut self,
@@ -479,9 +474,27 @@ impl TensorContext {
         self.tensors[tensor_ref].data = data;
     }
 
+    pub fn copy_data(&mut self, source: TensorRef, dest: TensorRef) {
+        let (left, right) = self.tensors.split_at_mut(std::cmp::max(source, dest));
+
+        if source < dest {
+
+            right[dest - source - 1]
+                .data
+                .copy_from_slice(&left[source].data);
+        } else {
+            left[dest]
+                .data
+                .copy_from_slice(&right[0].data);
+        }
+    }
+
     pub fn update_data_from_grad(&mut self, tensor_ref: TensorRef, step: f64) {
         let tensor = &mut self.tensors[tensor_ref];
-        let grad = tensor.grad.clone().unwrap_or_else(|| vec![0.0; tensor.data.len()]);
+        let grad = tensor
+            .grad
+            .clone()
+            .unwrap_or_else(|| vec![0.0; tensor.data.len()]);
         tensor
             .data
             .iter_mut()
@@ -495,6 +508,16 @@ mod tests {
     use crate::math::tensor_context;
 
     use super::*;
+
+    #[test]
+    fn test_copy_data() {
+        let tensor_context = create_tensor_context!(20);
+        let tensor_ref1 = tensor_context.borrow_mut().new_tensor(vec![5], vec![1.0, 2.0, 3.0, 4.0, 5.0]);
+        let tensor_ref2 = tensor_context.borrow_mut().new_tensor(vec![5], vec![0.0; 5]);
+        tensor_context.borrow_mut().copy_data(tensor_ref1, tensor_ref2);
+        let tensor = tensor_context.borrow_mut().get_tensor(tensor_ref2);
+        assert_eq!(tensor.data, vec![1.0, 2.0, 3.0, 4.0, 5.0]);
+    }
 
     //#region
     #[test]
