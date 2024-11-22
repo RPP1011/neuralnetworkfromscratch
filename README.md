@@ -3,7 +3,7 @@
 ## Goals Of This Project
 
 This is a horribly misguided attempt to clone TensorFlow in Rust. Its progress has been severely hampered by my complete lack of understanding of general computer science principles and ineptness, but hopefully it will get to a usable state within a few hundred hours of effort.
-
+q
 ## Steps
 
 1. **Make MLP NN capable of attaining 80% accuracy on MNIST**  
